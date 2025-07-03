@@ -1,0 +1,714 @@
+openapi: 3.0.3
+info:
+  title: JUDIT API
+  version: 1.0.0
+  description: 'Full OpenAPI 3.0 specification for JUDIT''s endpoints.  Covers requests,
+    responses, tracking, attachments, grouped queries, and credential vault operations.
+
+    '
+servers:
+- url: https://requests.prod.judit.io
+- url: https://lawsuits.production.judit.io
+- url: https://tracking.prod.judit.io
+- url: https://crawler.prod.judit.io
+tags:
+  - name: requests
+    description: Operações relacionadas a requisições
+  - name: lawsuits
+    description: Operações com o datalake de processos
+  - name: tracking
+    description: Monitoramento de processos
+  - name: vault
+    description: Cofre de credenciais
+  - name: credentials
+    description: Autenticação em tribunais com credenciais próprias
+  - name: responses
+    description: Consulta de respostas
+  - name: registrationData
+    description: Dados cadastrais
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: api-key
+  schemas:
+    Filter:
+      type: object
+      properties:
+        side:
+          type: string
+        distribution_date_gte:
+          type: string
+          format: date
+        amount_gte:
+          type: number
+        amount_lte:
+          type: number
+        tribunals:
+          type: object
+          properties:
+            keys:
+              type: array
+              items:
+                type: string
+            not_equal:
+              type: boolean
+        subject_codes:
+          type: object
+          properties:
+            keys:
+              type: array
+              items:
+                type: string
+            not_equal:
+              type: boolean
+        classification_codes:
+          type: object
+          properties:
+            keys:
+              type: array
+              items:
+                type: string
+            not_equal:
+              type: boolean
+    SearchParams:
+      type: object
+      properties:
+        lawsuit_instance:
+          type: integer
+        masked_response:
+          type: string
+          description: Used for simple document searches; returns a minified response
+            if set.
+        filter:
+          $ref: '#/components/schemas/Filter'
+        credential:
+          type: object
+          properties:
+            customer_key:
+              type: string
+    Search:
+      type: object
+      required:
+      - search_type
+      - search_key
+      properties:
+        search_type:
+          type: string
+          enum:
+          - cpf
+          - cnpj
+          - oab
+          - lawsuit_cnj
+          - lawsuit_id
+          - custom
+        search_key:
+          type: string
+        response_type:
+          type: string
+          enum:
+          - lawsuit
+          - parties
+          - attachments
+          - step
+          - lawsuits
+        cache_ttl_in_days:
+          type: integer
+        search_params:
+          $ref: '#/components/schemas/SearchParams'
+    RequestResponse:
+      type: object
+      properties:
+        request_id:
+          type: string
+        search:
+          $ref: '#/components/schemas/Search'
+        origin:
+          type: string
+        origin_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        tags:
+          type: object
+          description: Optional tags (arbitrary key-value pairs)
+security:
+- ApiKeyAuth: []
+paths:
+  /requests:
+    get:
+      summary: "Consultar requisi\xE7\xF5es criadas"
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      - name: page_size
+        in: query
+        schema:
+          type: integer
+      - name: status
+        in: query
+        schema:
+          type: string
+      responses:
+        '200':
+          description: "Lista de requisi\xE7\xF5es"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page_data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RequestResponse'
+      operationId: get_requests_994a1cc5
+      tags:
+      - requests
+      servers:
+      - url: https://requests.prod.judit.io
+    post:
+      summary: "Criar uma requisi\xE7\xE3o"
+      description: "Inicia uma nova consulta judicial usando CPF, CNPJ, OAB ou c\xF3\
+        digo CNJ."
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - search
+              properties:
+                search:
+                  $ref: '#/components/schemas/Search'
+      responses:
+        '200':
+          description: "Requisi\xE7\xE3o criada"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponse'
+      operationId: post_requests_9fc18ee9
+      tags:
+      - requests
+      servers:
+      - url: https://requests.prod.judit.io
+  /requests/{request_id}:
+    get:
+      summary: Consultar por request_id
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: request_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: "Dados da requisi\xE7\xE3o"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequestResponse'
+      operationId: get_requests_request_id_ec297b56
+      tags:
+      - requests
+      servers:
+      - url: https://requests.prod.judit.io
+  /responses/{response_id}:
+    get:
+      summary: Consultar por response_id
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: response_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Dados da resposta
+          content:
+            application/json:
+              schema:
+                type: object
+      operationId: get_responses_response_id_5e420d13
+      tags:
+      - responses
+      servers:
+      - url: https://requests.prod.judit.io
+  /responses:
+    get:
+      summary: Consultar respostas
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+      responses:
+        '200':
+          description: Lista de respostas
+          content:
+            application/json:
+              schema:
+                type: object
+      operationId: get_responses_c77d2c99
+      tags:
+      - responses
+      servers:
+      - url: https://requests.prod.judit.io
+  /lawsuits:
+    post:
+      summary: Consulta Datalake Hot Storage
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search:
+                  $ref: '#/components/schemas/Search'
+      responses:
+        '200':
+          description: Resultado da consulta
+          content:
+            application/json:
+              schema:
+                type: object
+      operationId: post_lawsuits_03a34fc7
+      tags:
+      - lawsuits
+      servers:
+      - url: https://lawsuits.production.judit.io
+  /requests/count:
+    post:
+      summary: Consultar quantidade de processos
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search:
+                  $ref: '#/components/schemas/Search'
+      responses:
+        '200':
+          description: "N\xFAmero de processos"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+      operationId: post_requests_count_081c0366
+      tags:
+      - requests
+      servers:
+      - url: https://requests.prod.judit.io
+  /requests/create/grouped:
+    post:
+      summary: "Consulta hist\xF3rica agrupada"
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                search:
+                  $ref: '#/components/schemas/Search'
+      responses:
+        '200':
+          description: Dados agrupados
+          content:
+            application/json:
+              schema:
+                type: object
+      operationId: post_requests_create_grouped_e09b817c
+      tags:
+      - requests
+      servers:
+      - url: https://requests.prod.judit.io
+  /lawsuits/{cnj_code}/{instance}/attachments/{attachment_id}:
+    get:
+      summary: Baixar anexo
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - name: cnj_code
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: instance
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Download do anexo
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+      operationId: get_lawsuits_cnj_code_instance_attachments_attachment_id_5c1bf19f
+      tags:
+      - lawsuits
+      servers:
+      - url: https://lawsuits.production.judit.io
+  /credentials:
+    get:
+      summary: Cofre de Credenciais
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de sistemas e status das credenciais
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  systems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        credential_status:
+                          type: string
+      operationId: get_credentials_a5ea8ce4
+      tags:
+      - credentials
+      servers:
+      - url: https://requests.prod.judit.io
+  /tracking:
+    post:
+      summary: Criar monitoramento
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - search
+              - recurrence
+              properties:
+                recurrence:
+                  type: integer
+                  example: 1
+                search:
+                  $ref: '#/components/schemas/Search'
+      responses:
+        '200':
+          description: Monitoramento criado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracking_id:
+                    type: string
+                  status:
+                    type: string
+                    example: created
+      operationId: post_tracking_21d0bfb7
+      tags:
+      - tracking
+      servers:
+      - url: https://tracking.prod.judit.io
+    get:
+      summary: Consultar monitoramentos
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Lista de monitoramentos
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page_data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        tracking_id:
+                          type: string
+                        status:
+                          type: string
+                        recurrence:
+                          type: integer
+                        search:
+                          $ref: '#/components/schemas/Search'
+                        created_at:
+                          type: string
+                          format: date-time
+      operationId: get_tracking_01d92330
+      tags:
+      - tracking
+      servers:
+      - url: https://tracking.prod.judit.io
+  /tracking/{tracking_id}:
+    delete:
+      summary: Deletar monitoramento
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: path
+        name: tracking_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Monitoramento deletado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracking_id:
+                    type: string
+                  status:
+                    type: string
+                    example: deleted
+      operationId: delete_tracking_tracking_id_89098b70
+      tags:
+      - tracking
+      servers:
+      - url: https://tracking.prod.judit.io
+    get:
+      summary: "Consultar monitoramento espec\xEDfico"
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: path
+        name: tracking_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Detalhes do monitoramento
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracking_id:
+                    type: string
+                  status:
+                    type: string
+                  search:
+                    $ref: '#/components/schemas/Search'
+                  created_at:
+                    type: string
+                    format: date-time
+      operationId: get_tracking_tracking_id_0004362d
+      tags:
+      - tracking
+      servers:
+      - url: https://tracking.prod.judit.io
+  /tracking/{tracking_id}/pause:
+    post:
+      summary: Pausar monitoramento
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: path
+        name: tracking_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Monitoramento pausado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracking_id:
+                    type: string
+                  status:
+                    type: string
+                    example: paused
+      operationId: post_tracking_tracking_id_pause_f82da304
+      tags:
+      - tracking
+      servers:
+      - url: https://tracking.prod.judit.io
+  /tracking/{tracking_id}/resume:
+    post:
+      summary: Reativar monitoramento
+      security:
+      - ApiKeyAuth: []
+      parameters:
+      - in: path
+        name: tracking_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Monitoramento reativado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tracking_id:
+                    type: string
+                  status:
+                    type: string
+                    example: created
+      operationId: post_tracking_tracking_id_resume_807f50be
+      tags:
+      - tracking
+      servers:
+      - url: https://tracking.prod.judit.io
+  /registrationData:
+    post:
+      summary: "Criar uma requisi\xE7\xE3o de dados cadastrais"
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - search
+              properties:
+                search:
+                  type: object
+                  properties:
+                    search_type:
+                      type: string
+                    search_key:
+                      type: string
+                reveal_partners_documents:
+                  type: boolean
+      responses:
+        '200':
+          description: Dados cadastrais retornados
+          content:
+            application/json:
+              schema:
+                type: object
+      operationId: post_registrationData_add87e27
+      tags:
+      - registrationData
+      servers:
+      - url: https://requests.prod.judit.io
+  /vault:
+    get:
+      summary: Cofre de credenciais
+      description: Lista status das credenciais por sistema
+      security:
+      - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Lista de sistemas e credenciais
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  systems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        credential_status:
+                          type: string
+                        customer_key:
+                          type: string
+      operationId: get_vault_457b0043
+      tags:
+      - vault
+      servers:
+      - url: https://requests.prod.judit.io
+  /vault/create:
+    post:
+      summary: Cadastro de credenciais
+      description: Envia credenciais para armazenamento seguro
+      security:
+      - ApiKeyAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                customer_key:
+                  type: string
+                credentials:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      system:
+                        type: string
+                      username:
+                        type: string
+                      password:
+                        type: string
+      responses:
+        '200':
+          description: Credenciais salvas
+          content:
+            application/json:
+              schema:
+                type: object
+      operationId: post_vault_create_3fa9c660
+      tags:
+      - vault
+      servers:
+      - url: https://requests.prod.judit.io

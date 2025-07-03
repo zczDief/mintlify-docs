@@ -1,0 +1,559 @@
+---
+title: "SDK Python"
+description: "Biblioteca oficial Python para integração simplificada com a Judit API"
+---
+
+# SDK Python
+
+O SDK Python da Judit oferece uma interface simplificada e robusta para integração com a API, incluindo tratamento automático de erros, retry, paginação e tipagem completa.
+
+## Instalação
+
+```bash
+# Via pip
+pip install judit-api
+
+# Via uv (recomendado)
+uv add judit-api
+
+# Via poetry
+poetry add judit-api
+```
+
+## Configuração Inicial
+
+```python
+import os
+from judit import JuditClient
+
+# Inicializar cliente
+client = JuditClient(
+    api_key=os.getenv('JUDIT_API_KEY'),
+    timeout=30,  # Timeout padrão em segundos
+    max_retries=3,  # Número máximo de tentativas
+    enable_logging=True  # Habilitar logs detalhados
+)
+
+# Verificar conectividade
+try:
+    status = client.health_check()
+    print(f"✅ Conectado à Judit API: {status}")
+except Exception as e:
+    print(f"❌ Erro de conexão: {e}")
+```
+
+## Consultas (Requests)
+
+### Criar Nova Consulta
+
+```python
+from judit.types import RequestType, DocumentType
+
+# Consulta por CPF
+request = client.requests.create(
+    request_type=RequestType.CPF,
+    document="123.456.789-00",
+    include_attachments=True,
+    webhook_url="https://seu-app.com/webhook"
+)
+
+print(f"Consulta criada: {request.id}")
+print(f"Status: {request.status}")
+
+# Consulta por CNPJ com filtros
+request = client.requests.create(
+    request_type=RequestType.CNPJ,
+    document="12.345.678/0001-90",
+    filters={
+        "tribunal": ["TJSP", "TJRJ"],
+        "date_from": "2023-01-01",
+        "date_to": "2024-01-01"
+    },
+    priority="high"
+)
+
+# Consulta por OAB
+request = client.requests.create(
+    request_type=RequestType.OAB,
+    document="123456",
+    state="SP",
+    include_registration_data=True
+)
+```
+
+### Listar Consultas
+
+```python
+from judit.types import RequestStatus
+
+# Listar todas as consultas
+requests = client.requests.list(
+    page_size=50,
+    status=RequestStatus.COMPLETED
+)
+
+for req in requests:
+    print(f"ID: {req.id}, Status: {req.status}, Criado: {req.created_at}")
+
+# Paginação automática
+all_requests = []
+for page in client.requests.list_all(status=RequestStatus.COMPLETED):
+    all_requests.extend(page.items)
+    print(f"Processadas {len(all_requests)} consultas...")
+
+# Filtros avançados
+recent_requests = client.requests.list(
+    date_from="2024-01-01",
+    document_type=DocumentType.CPF,
+    has_results=True,
+    sort_by="created_at",
+    sort_order="desc"
+)
+```
+
+### Obter Consulta Específica
+
+```python
+# Por ID
+request = client.requests.get("req_1234567890abcdef")
+
+print(f"Documento: {request.document}")
+print(f"Tipo: {request.request_type}")
+print(f"Status: {request.status}")
+print(f"Resultados: {len(request.results)} encontrados")
+
+# Aguardar conclusão
+request = client.requests.wait_for_completion(
+    request_id="req_1234567890abcdef",
+    timeout=300,  # 5 minutos
+    poll_interval=10  # Verificar a cada 10 segundos
+)
+
+if request.status == RequestStatus.COMPLETED:
+    print("✅ Consulta concluída!")
+    for result in request.results:
+        print(f"- Processo: {result.process_number}")
+else:
+    print(f"⏳ Status atual: {request.status}")
+```
+
+## Respostas (Responses)
+
+### Listar Respostas
+
+```python
+# Respostas de uma consulta específica
+responses = client.responses.list(
+    request_id="req_1234567890abcdef",
+    include_attachments=True
+)
+
+for response in responses:
+    print(f"Processo: {response.process_number}")
+    print(f"Tribunal: {response.court}")
+    print(f"Status: {response.status}")
+    print(f"Anexos: {len(response.attachments)}")
+
+# Todas as respostas com filtros
+responses = client.responses.list(
+    court="TJSP",
+    status="active",
+    date_from="2024-01-01",
+    has_attachments=True
+)
+```
+
+### Obter Resposta Específica
+
+```python
+# Por ID
+response = client.responses.get("resp_1234567890abcdef")
+
+print(f"Número do processo: {response.process_number}")
+print(f"Partes: {', '.join(response.parties)}")
+print(f"Última atualização: {response.last_update}")
+
+# Download de anexos
+for attachment in response.attachments:
+    file_content = client.responses.download_attachment(
+        response_id=response.id,
+        attachment_id=attachment.id
+    )
+    
+    with open(f"{attachment.filename}", "wb") as f:
+        f.write(file_content)
+    
+    print(f"📄 Baixado: {attachment.filename}")
+```
+
+## Tracking (Monitoramento)
+
+### Criar Tracking
+
+```python
+from judit.types import TrackingConfig
+
+# Tracking simples
+tracking = client.tracking.create(
+    process_number="1234567-89.2024.8.26.0001",
+    webhook_url="https://seu-app.com/webhook/tracking"
+)
+
+# Tracking com configurações avançadas
+tracking = client.tracking.create(
+    process_number="1234567-89.2024.8.26.0001",
+    config=TrackingConfig(
+        check_frequency="daily",
+        notify_on=["movement", "status_change", "new_attachment"],
+        auto_download_attachments=True,
+        filters={
+            "movement_types": ["sentença", "despacho", "decisão"]
+        }
+    ),
+    webhook_url="https://seu-app.com/webhook/tracking",
+    metadata={
+        "client_id": "12345",
+        "case_reference": "CASE-2024-001"
+    }
+)
+
+print(f"Tracking criado: {tracking.id}")
+print(f"Status: {tracking.status}")
+```
+
+### Gerenciar Trackings
+
+```python
+# Listar trackings ativos
+trackings = client.tracking.list(
+    status="active",
+    sort_by="created_at"
+)
+
+for tracking in trackings:
+    print(f"ID: {tracking.id}")
+    print(f"Processo: {tracking.process_number}")
+    print(f"Última verificação: {tracking.last_check}")
+
+# Atualizar configuração
+updated_tracking = client.tracking.update(
+    tracking_id="track_1234567890abcdef",
+    config=TrackingConfig(
+        check_frequency="hourly",
+        notify_on=["movement", "new_attachment"]
+    )
+)
+
+# Pausar tracking
+client.tracking.pause("track_1234567890abcdef")
+
+# Reativar tracking
+client.tracking.resume("track_1234567890abcdef")
+
+# Remover tracking
+client.tracking.delete("track_1234567890abcdef")
+```
+
+### Obter Updates de Tracking
+
+```python
+# Updates de um tracking específico
+updates = client.tracking.get_updates(
+    tracking_id="track_1234567890abcdef",
+    date_from="2024-01-01",
+    limit=100
+)
+
+for update in updates:
+    print(f"Data: {update.timestamp}")
+    print(f"Tipo: {update.event_type}")
+    print(f"Descrição: {update.description}")
+    
+    if update.attachments:
+        print(f"Novos anexos: {len(update.attachments)}")
+```
+
+## Vault (Credenciais)
+
+### Gerenciar Credenciais
+
+```python
+from judit.types import CredentialType
+
+# Adicionar credenciais
+credential = client.vault.create(
+    court="TJSP",
+    credential_type=CredentialType.LOGIN_PASSWORD,
+    username="seu_usuario",
+    password="sua_senha",
+    metadata={
+        "description": "Credenciais para TJSP - Advogado Principal",
+        "expires_at": "2024-12-31"
+    }
+)
+
+print(f"Credencial criada: {credential.id}")
+
+# Listar credenciais
+credentials = client.vault.list()
+
+for cred in credentials:
+    print(f"ID: {cred.id}")
+    print(f"Tribunal: {cred.court}")
+    print(f"Tipo: {cred.credential_type}")
+    print(f"Status: {cred.status}")
+
+# Atualizar credenciais
+client.vault.update(
+    credential_id="cred_1234567890abcdef",
+    password="nova_senha"
+)
+
+# Testar credenciais
+test_result = client.vault.test(
+    credential_id="cred_1234567890abcdef"
+)
+
+if test_result.success:
+    print("✅ Credenciais válidas")
+else:
+    print(f"❌ Erro: {test_result.error}")
+```
+
+## Tratamento de Erros
+
+```python
+from judit.exceptions import (
+    JuditAPIError,
+    AuthenticationError,
+    ValidationError,
+    RateLimitError,
+    ResourceNotFoundError
+)
+
+try:
+    request = client.requests.create(
+        request_type=RequestType.CPF,
+        document="cpf_invalido"
+    )
+    
+except ValidationError as e:
+    print(f"❌ Erro de validação: {e.message}")
+    print(f"Campo: {e.field}")
+    print(f"Valor fornecido: {e.provided_value}")
+    
+except AuthenticationError as e:
+    print(f"🔐 Erro de autenticação: {e.message}")
+    print("Verifique sua API Key")
+    
+except RateLimitError as e:
+    print(f"⏳ Rate limit excedido: {e.message}")
+    print(f"Aguarde {e.retry_after} segundos")
+    
+except ResourceNotFoundError as e:
+    print(f"🔍 Recurso não encontrado: {e.message}")
+    
+except JuditAPIError as e:
+    print(f"🚨 Erro da API: {e.message}")
+    print(f"Código: {e.error_code}")
+    print(f"Request ID: {e.request_id}")
+    
+except Exception as e:
+    print(f"💥 Erro inesperado: {e}")
+```
+
+## Configurações Avançadas
+
+### Cliente Customizado
+
+```python
+from judit import JuditClient
+from judit.config import ClientConfig
+import logging
+
+# Configuração personalizada
+config = ClientConfig(
+    api_key=os.getenv('JUDIT_API_KEY'),
+    base_url="https://api.judit.io",  # URL customizada
+    timeout=60,
+    max_retries=5,
+    retry_backoff_factor=2.0,
+    retry_status_codes=[429, 500, 502, 503, 504],
+    enable_request_logging=True,
+    log_level=logging.DEBUG
+)
+
+client = JuditClient(config=config)
+
+# Configurar proxy
+config.proxy = {
+    'http': 'http://proxy.empresa.com:8080',
+    'https': 'https://proxy.empresa.com:8080'
+}
+
+# Headers customizados
+config.default_headers = {
+    'User-Agent': 'MeuApp/1.0',
+    'X-Client-Version': '2.1.0'
+}
+```
+
+### Callbacks e Hooks
+
+```python
+def on_request_start(method, url, **kwargs):
+    print(f"🚀 Iniciando {method} {url}")
+
+def on_request_success(response):
+    print(f"✅ Sucesso: {response.status_code}")
+
+def on_request_error(response):
+    print(f"❌ Erro: {response.status_code}")
+
+def on_retry(attempt, delay):
+    print(f"🔄 Tentativa {attempt}, aguardando {delay}s")
+
+# Registrar callbacks
+client.on('request_start', on_request_start)
+client.on('request_success', on_request_success)
+client.on('request_error', on_request_error)
+client.on('retry', on_retry)
+```
+
+## Utilitários
+
+### Validação de Documentos
+
+```python
+from judit.utils import validate_document
+
+# Validar CPF
+is_valid = validate_document("123.456.789-00", "cpf")
+print(f"CPF válido: {is_valid}")
+
+# Validar CNPJ
+is_valid = validate_document("12.345.678/0001-90", "cnpj")
+print(f"CNPJ válido: {is_valid}")
+
+# Validar número CNJ
+is_valid = validate_document("1234567-89.2024.8.26.0001", "cnj")
+print(f"CNJ válido: {is_valid}")
+```
+
+### Formatação de Documentos
+
+```python
+from judit.utils import format_document, clean_document
+
+# Limpar formatação
+clean_cpf = clean_document("123.456.789-00")  # "12345678900"
+
+# Aplicar formatação
+formatted_cpf = format_document("12345678900", "cpf")  # "123.456.789-00"
+formatted_cnpj = format_document("12345678000190", "cnpj")  # "12.345.678/0001-90"
+```
+
+### Cache e Performance
+
+```python
+from judit.cache import MemoryCache, RedisCache
+
+# Cache em memória
+memory_cache = MemoryCache(ttl_seconds=300)
+client = JuditClient(
+    api_key=os.getenv('JUDIT_API_KEY'),
+    cache=memory_cache
+)
+
+# Cache Redis
+redis_cache = RedisCache(
+    host='localhost',
+    port=6379,
+    db=0,
+    ttl_seconds=600
+)
+client = JuditClient(
+    api_key=os.getenv('JUDIT_API_KEY'),
+    cache=redis_cache
+)
+
+# Desabilitar cache para requisição específica
+request = client.requests.get(
+    "req_1234567890abcdef",
+    use_cache=False
+)
+```
+
+## Exemplo Completo
+
+```python
+import os
+import asyncio
+from judit import JuditClient
+from judit.types import RequestType, RequestStatus
+
+async def main():
+    # Inicializar cliente
+    client = JuditClient(
+        api_key=os.getenv('JUDIT_API_KEY'),
+        enable_logging=True
+    )
+    
+    try:
+        # 1. Criar consulta
+        print("📋 Criando consulta...")
+        request = client.requests.create(
+            request_type=RequestType.CPF,
+            document="123.456.789-00",
+            include_attachments=True
+        )
+        print(f"✅ Consulta criada: {request.id}")
+        
+        # 2. Aguardar processamento
+        print("⏳ Aguardando processamento...")
+        completed_request = client.requests.wait_for_completion(
+            request_id=request.id,
+            timeout=300
+        )
+        
+        if completed_request.status == RequestStatus.COMPLETED:
+            print("✅ Consulta concluída!")
+            
+            # 3. Obter respostas
+            responses = client.responses.list(
+                request_id=request.id
+            )
+            
+            print(f"📄 {len(responses)} processos encontrados:")
+            for response in responses:
+                print(f"  - {response.process_number} ({response.court})")
+                
+                # 4. Criar tracking para processos ativos
+                if response.status == "active":
+                    tracking = client.tracking.create(
+                        process_number=response.process_number,
+                        webhook_url="https://seu-app.com/webhook"
+                    )
+                    print(f"  👁️ Tracking criado: {tracking.id}")
+        
+        else:
+            print(f"⚠️ Consulta não concluída: {completed_request.status}")
+    
+    except Exception as e:
+        print(f"❌ Erro: {e}")
+    
+    finally:
+        # Fechar cliente
+        client.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+## Próximos Passos
+
+- **[Tratamento de Erros](/errors)**: Códigos de erro e estratégias de tratamento
+- **[Rate Limits](/rate-limits)**: Entenda os limites da API
+- **[FAQ](/faq)**: Perguntas frequentes sobre o SDK
+
+> **Dica**: O SDK inclui tipagem completa com TypeScript-style hints para melhor experiência de desenvolvimento no VS Code e outros IDEs.

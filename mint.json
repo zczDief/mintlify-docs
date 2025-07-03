@@ -1,0 +1,97 @@
+{
+  "name": "Judit API",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#0D9373",
+    "light": "#07C983",
+    "dark": "#0D9373",
+    "anchors": {
+      "from": "#0D9373",
+      "to": "#07C983"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Suporte",
+      "url": "mailto:suporte@judit.io"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Dashboard",
+    "url": "https://dashboard.judit.io"
+  },
+
+  "anchors": [
+    {
+      "name": "Developer Portal",
+      "icon": "square-terminal",
+      "url": "https://developers.judit.io"
+    },
+    {
+      "name": "Status",
+      "icon": "chart-line",
+      "url": "https://status.judit.io"
+    },
+    {
+      "name": "Community",
+      "icon": "discord",
+      "url": "https://community.judit.io"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Começar",
+      "pages": [
+        "index",
+        "quickstart",
+        "authentication"
+      ]
+    },
+    {
+      "group": "Conceitos Fundamentais",
+      "pages": [
+        "lawsuit-object",
+        "lawsuit-enums",
+        "pagination",
+        "rate-limits",
+        "errors"
+      ]
+    },
+    {
+      "group": "Endpoints",
+      "pages": [
+        "endpoints/requests",
+        "endpoints/responses",
+        "endpoints/tracking"
+      ]
+    },
+    {
+      "group": "Ferramentas",
+      "pages": [
+        "sdk"
+      ]
+    },
+    {
+      "group": "Recursos",
+      "pages": [
+        "faq",
+        "glossario",
+        "changelog"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "website": "https://judit.io",
+    "linkedin": "https://linkedin.com/company/judit-io",
+    "github": "https://github.com/judit-io"
+  },
+
+  "seo": {
+    "indexHiddenPages": false
+  }
+
+}

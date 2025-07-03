@@ -1,0 +1,695 @@
+---
+title: "Endpoints – Tracking"
+description: "Documentação completa dos endpoints de tracking da Judit API"
+---
+
+# Endpoints – Tracking
+
+Os endpoints de **tracking** permitem monitorar automaticamente processos judiciais e receber notificações sobre atualizações.
+
+## Base URL
+
+```
+https://tracking.prod.judit.io
+```
+
+## Visão Geral dos Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `POST` | `/tracking` | Criar novo tracking |
+| `GET` | `/tracking` | Listar trackings ativos |
+| `GET` | `/tracking/{tracking_id}` | Consultar tracking específico |
+| `PUT` | `/tracking/{tracking_id}` | Atualizar tracking |
+| `DELETE` | `/tracking/{tracking_id}` | Remover tracking |
+| `GET` | `/tracking/{tracking_id}/updates` | Listar atualizações |
+
+---
+
+## POST /tracking
+
+Cria um novo tracking para monitorar um processo judicial.
+
+### Parâmetros do Body
+
+| Parâmetro | Tipo | Obrigatório | Descrição |
+|-----------|------|-------------|-----------|
+| `cnj_code` | string | Sim | Código CNJ do processo |
+| `webhook_url` | string | Não | URL para receber notificações |
+| `email` | string | Não | Email para notificações |
+| `frequency` | string | Não | Frequência de verificação (daily, weekly) |
+| `active` | boolean | Não | Se o tracking está ativo (padrão: true) |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X POST "https://tracking.prod.judit.io/tracking" \
+  -H "api-key: $JUDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cnj_code": "1234567-89.2023.1.23.4567",
+    "webhook_url": "https://meuapp.com/webhook/judit",
+    "email": "notificacoes@empresa.com",
+    "frequency": "daily"
+  }'
+```
+
+**Python:**
+```python
+import requests
+import os
+
+api_key = os.getenv('JUDIT_API_KEY')
+headers = {
+    'api-key': api_key,
+    'Content-Type': 'application/json'
+}
+
+def create_tracking(cnj_code, webhook_url=None, email=None, frequency='daily'):
+    """Cria novo tracking para processo"""
+    payload = {
+        'cnj_code': cnj_code,
+        'frequency': frequency,
+        'active': True
+    }
+    
+    if webhook_url:
+        payload['webhook_url'] = webhook_url
+    
+    if email:
+        payload['email'] = email
+    
+    response = requests.post(
+        'https://tracking.prod.judit.io/tracking',
+        json=payload,
+        headers=headers
+    )
+    
+    if response.status_code == 201:
+        return response.json()
+    else:
+        print(f"Erro: {response.status_code}")
+        return None
+
+# Criar tracking com webhook
+tracking_data = create_tracking(
+    cnj_code='1234567-89.2023.1.23.4567',
+    webhook_url='https://meuapp.com/webhook/judit',
+    email='notificacoes@empresa.com'
+)
+
+if tracking_data:
+    print(f"Tracking criado: {tracking_data['tracking_id']}")
+```
+
+**JavaScript:**
+```javascript
+const apiKey = process.env.JUDIT_API_KEY;
+
+const headers = {
+    'api-key': apiKey,
+    'Content-Type': 'application/json'
+};
+
+async function createTracking(cnjCode, webhookUrl = null, email = null, frequency = 'daily') {
+    const payload = {
+        cnj_code: cnjCode,
+        frequency: frequency,
+        active: true
+    };
+    
+    if (webhookUrl) {
+        payload.webhook_url = webhookUrl;
+    }
+    
+    if (email) {
+        payload.email = email;
+    }
+    
+    try {
+        const response = await fetch('https://tracking.prod.judit.io/tracking', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(payload)
+        });
+        
+        if (response.status === 201) {
+            return await response.json();
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return null;
+    }
+}
+
+// Criar tracking com webhook
+const trackingData = await createTracking(
+    '1234567-89.2023.1.23.4567',
+    'https://meuapp.com/webhook/judit',
+    'notificacoes@empresa.com'
+);
+
+if (trackingData) {
+    console.log(`Tracking criado: ${trackingData.tracking_id}`);
+}
+```
+
+### Resposta de Sucesso (201)
+
+```json
+{
+  "tracking_id": "track_1234567890abcdef",
+  "cnj_code": "1234567-89.2023.1.23.4567",
+  "webhook_url": "https://meuapp.com/webhook/judit",
+  "email": "notificacoes@empresa.com",
+  "frequency": "daily",
+  "active": true,
+  "status": "active",
+  "created_at": "2023-12-01T10:30:00Z",
+  "updated_at": "2023-12-01T10:30:00Z",
+  "last_check": null,
+  "next_check": "2023-12-02T10:30:00Z",
+  "updates_count": 0
+}
+```
+
+---
+
+## GET /tracking
+
+Lista todos os trackings ativos com paginação.
+
+### Parâmetros de Query
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `page` | integer | Número da página (padrão: 1) |
+| `page_size` | integer | Itens por página (padrão: 20, máx: 100) |
+| `status` | string | Filtrar por status: "active", "paused", "error" |
+| `frequency` | string | Filtrar por frequência: "daily", "weekly" |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+# Listar todos os trackings
+curl -X GET "https://tracking.prod.judit.io/tracking?page=1&page_size=20" \
+  -H "api-key: $JUDIT_API_KEY"
+
+# Filtrar por status ativo
+curl -X GET "https://tracking.prod.judit.io/tracking?status=active" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+def get_trackings(page=1, page_size=20, status=None, frequency=None):
+    """Lista trackings com filtros opcionais"""
+    params = {
+        'page': page,
+        'page_size': page_size
+    }
+    
+    if status:
+        params['status'] = status
+    
+    if frequency:
+        params['frequency'] = frequency
+    
+    response = requests.get(
+        'https://tracking.prod.judit.io/tracking',
+        headers=headers,
+        params=params
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Erro: {response.status_code}")
+        return None
+
+# Listar trackings ativos
+trackings_data = get_trackings(status='active', page_size=50)
+
+if trackings_data:
+    print(f"Total de trackings: {trackings_data['meta']['total_items']}")
+    
+    for tracking in trackings_data.get('page_data', []):
+        print(f"CNJ: {tracking['cnj_code']} - Status: {tracking['status']}")
+```
+
+**JavaScript:**
+```javascript
+async function getTrackings(page = 1, pageSize = 20, status = null, frequency = null) {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: pageSize.toString()
+    });
+    
+    if (status) {
+        params.append('status', status);
+    }
+    
+    if (frequency) {
+        params.append('frequency', frequency);
+    }
+    
+    try {
+        const response = await fetch(`https://tracking.prod.judit.io/tracking?${params}`, {
+            headers: headers
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return null;
+    }
+}
+
+// Listar trackings ativos
+const trackingsData = await getTrackings(1, 50, 'active');
+
+if (trackingsData) {
+    console.log(`Total de trackings: ${trackingsData.meta.total_items}`);
+    
+    trackingsData.page_data?.forEach(tracking => {
+        console.log(`CNJ: ${tracking.cnj_code} - Status: ${tracking.status}`);
+    });
+}
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "page_data": [
+    {
+      "tracking_id": "track_1234567890abcdef",
+      "cnj_code": "1234567-89.2023.1.23.4567",
+      "webhook_url": "https://meuapp.com/webhook/judit",
+      "email": "notificacoes@empresa.com",
+      "frequency": "daily",
+      "active": true,
+      "status": "active",
+      "created_at": "2023-12-01T10:30:00Z",
+      "updated_at": "2023-12-01T10:30:00Z",
+      "last_check": "2023-12-01T15:30:00Z",
+      "next_check": "2023-12-02T15:30:00Z",
+      "updates_count": 3
+    }
+  ],
+  "links": {
+    "next": "https://tracking.prod.judit.io/tracking?page=2",
+    "prev": null,
+    "first": "https://tracking.prod.judit.io/tracking?page=1",
+    "last": "https://tracking.prod.judit.io/tracking?page=5"
+  },
+  "meta": {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_items": 87,
+    "per_page": 20,
+    "has_next": true,
+    "has_prev": false
+  }
+}
+```
+
+---
+
+## GET /tracking/{tracking_id}
+
+Consulta um tracking específico pelo ID.
+
+### Parâmetros de Path
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `tracking_id` | string | ID único do tracking |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X GET "https://tracking.prod.judit.io/tracking/track_1234567890abcdef" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+def get_tracking_by_id(tracking_id):
+    """Consulta tracking específico pelo ID"""
+    response = requests.get(
+        f'https://tracking.prod.judit.io/tracking/{tracking_id}',
+        headers=headers
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 404:
+        print(f"Tracking {tracking_id} não encontrado")
+        return None
+    else:
+        print(f"Erro: {response.status_code}")
+        return None
+
+# Consultar tracking específico
+tracking_data = get_tracking_by_id('track_1234567890abcdef')
+
+if tracking_data:
+    print(f"CNJ: {tracking_data['cnj_code']}")
+    print(f"Status: {tracking_data['status']}")
+    print(f"Última verificação: {tracking_data['last_check']}")
+    print(f"Atualizações encontradas: {tracking_data['updates_count']}")
+```
+
+**JavaScript:**
+```javascript
+async function getTrackingById(trackingId) {
+    try {
+        const response = await fetch(`https://tracking.prod.judit.io/tracking/${trackingId}`, {
+            headers: headers
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        } else if (response.status === 404) {
+            console.log(`Tracking ${trackingId} não encontrado`);
+            return null;
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return null;
+    }
+}
+
+// Consultar tracking específico
+const trackingData = await getTrackingById('track_1234567890abcdef');
+
+if (trackingData) {
+    console.log(`CNJ: ${trackingData.cnj_code}`);
+    console.log(`Status: ${trackingData.status}`);
+    console.log(`Última verificação: ${trackingData.last_check}`);
+    console.log(`Atualizações encontradas: ${trackingData.updates_count}`);
+}
+```
+
+---
+
+## PUT /tracking/{tracking_id}
+
+Atualiza configurações de um tracking existente.
+
+### Parâmetros do Body
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `webhook_url` | string | Nova URL para webhook |
+| `email` | string | Novo email para notificações |
+| `frequency` | string | Nova frequência (daily, weekly) |
+| `active` | boolean | Ativar/desativar tracking |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X PUT "https://tracking.prod.judit.io/tracking/track_1234567890abcdef" \
+  -H "api-key: $JUDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "frequency": "weekly",
+    "active": false
+  }'
+```
+
+**Python:**
+```python
+def update_tracking(tracking_id, **kwargs):
+    """Atualiza configurações do tracking"""
+    payload = {k: v for k, v in kwargs.items() if v is not None}
+    
+    response = requests.put(
+        f'https://tracking.prod.judit.io/tracking/{tracking_id}',
+        json=payload,
+        headers=headers
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Erro: {response.status_code}")
+        return None
+
+# Pausar tracking
+result = update_tracking('track_1234567890abcdef', active=False)
+
+# Alterar frequência
+result = update_tracking(
+    'track_1234567890abcdef',
+    frequency='weekly',
+    webhook_url='https://novoapp.com/webhook'
+)
+```
+
+**JavaScript:**
+```javascript
+async function updateTracking(trackingId, updates) {
+    try {
+        const response = await fetch(`https://tracking.prod.judit.io/tracking/${trackingId}`, {
+            method: 'PUT',
+            headers: headers,
+            body: JSON.stringify(updates)
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return null;
+    }
+}
+
+// Pausar tracking
+const result = await updateTracking('track_1234567890abcdef', { active: false });
+
+// Alterar frequência
+const result2 = await updateTracking('track_1234567890abcdef', {
+    frequency: 'weekly',
+    webhook_url: 'https://novoapp.com/webhook'
+});
+```
+
+---
+
+## DELETE /tracking/{tracking_id}
+
+Remove um tracking permanentemente.
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X DELETE "https://tracking.prod.judit.io/tracking/track_1234567890abcdef" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+def delete_tracking(tracking_id):
+    """Remove tracking permanentemente"""
+    response = requests.delete(
+        f'https://tracking.prod.judit.io/tracking/{tracking_id}',
+        headers=headers
+    )
+    
+    if response.status_code == 204:
+        print(f"Tracking {tracking_id} removido com sucesso")
+        return True
+    else:
+        print(f"Erro: {response.status_code}")
+        return False
+
+# Remover tracking
+success = delete_tracking('track_1234567890abcdef')
+```
+
+**JavaScript:**
+```javascript
+async function deleteTracking(trackingId) {
+    try {
+        const response = await fetch(`https://tracking.prod.judit.io/tracking/${trackingId}`, {
+            method: 'DELETE',
+            headers: headers
+        });
+        
+        if (response.status === 204) {
+            console.log(`Tracking ${trackingId} removido com sucesso`);
+            return true;
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return false;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return false;
+    }
+}
+
+// Remover tracking
+const success = await deleteTracking('track_1234567890abcdef');
+```
+
+---
+
+## Notificações via Webhook
+
+Quando atualizações são detectadas, a Judit API envia notificações para o webhook configurado.
+
+### Estrutura da Notificação
+
+```json
+{
+  "event": "tracking.update",
+  "tracking_id": "track_1234567890abcdef",
+  "cnj_code": "1234567-89.2023.1.23.4567",
+  "timestamp": "2023-12-01T16:30:00Z",
+  "updates": [
+    {
+      "type": "movement",
+      "date": "2023-12-01",
+      "description": "Juntada de petição",
+      "details": {
+        "document_type": "petição",
+        "party": "autor",
+        "lawyer": "Dr. Carlos Advogado"
+      }
+    },
+    {
+      "type": "status_change",
+      "old_status": "Em andamento",
+      "new_status": "Suspenso",
+      "date": "2023-12-01"
+    }
+  ],
+  "lawsuit_info": {
+    "tribunal": "TJSP",
+    "court": "1ª Vara Cível",
+    "current_status": "Suspenso",
+    "last_movement": "2023-12-01"
+  }
+}
+```
+
+### Implementando Webhook Handler
+
+**Python (Flask):**
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/webhook/judit', methods=['POST'])
+def handle_judit_webhook():
+    """Handler para notificações de tracking"""
+    try:
+        data = request.get_json()
+        
+        if data.get('event') != 'tracking.update':
+            return jsonify({'error': 'Evento não suportado'}), 400
+        
+        tracking_id = data.get('tracking_id')
+        cnj_code = data.get('cnj_code')
+        updates = data.get('updates', [])
+        
+        print(f"Atualização recebida para {cnj_code}:")
+        
+        for update in updates:
+            if update['type'] == 'movement':
+                print(f"  Novo movimento: {update['description']}")
+            elif update['type'] == 'status_change':
+                print(f"  Status alterado: {update['old_status']} → {update['new_status']}")
+        
+        return jsonify({'status': 'success'}), 200
+        
+    except Exception as e:
+        print(f"Erro no webhook: {e}")
+        return jsonify({'error': 'Erro interno'}), 500
+```
+
+## Códigos de Resposta
+
+| Código | Descrição |
+|--------|-----------|
+| `200` | Sucesso |
+| `201` | Tracking criado |
+| `204` | Tracking removido |
+| `400` | Dados inválidos |
+| `401` | API Key inválida |
+| `403` | Acesso negado |
+| `404` | Tracking não encontrado |
+| `409` | Tracking já existe para este CNJ |
+| `429` | Rate limit excedido |
+| `500` | Erro interno do servidor |
+
+## Boas Práticas
+
+### 1. **Gerenciamento de Webhooks**
+
+```python
+def webhook_with_retry(url, data, max_retries=3):
+    """Envia webhook com retry automático"""
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(url, json=data, timeout=10)
+            if response.status_code == 200:
+                return True
+        except Exception as e:
+            print(f"Tentativa {attempt + 1} falhou: {e}")
+            time.sleep(2 ** attempt)
+    
+    return False
+```
+
+### 2. **Monitoramento de Status**
+
+```python
+def monitor_trackings():
+    """Monitora status de todos os trackings"""
+    trackings_data = get_trackings(page_size=100)
+    
+    if trackings_data:
+        status_count = {}
+        for tracking in trackings_data.get('page_data', []):
+            status = tracking['status']
+            status_count[status] = status_count.get(status, 0) + 1
+        
+        print("Status dos Trackings:")
+        for status, count in status_count.items():
+            print(f"  {status}: {count}")
+    
+    return trackings_data
+```
+
+## Próximos Passos
+
+- **[Tratamento de Erros](/errors)**: Como lidar com erros da API
+- **[SDK Python](/sdk)**: Biblioteca oficial para integração
+- **[FAQ](/faq)**: Perguntas frequentes sobre tracking
+
+> **Importante**: Trackings consomem recursos. Remova trackings desnecessários para otimizar performance.

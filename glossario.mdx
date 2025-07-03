@@ -1,0 +1,238 @@
+---
+title: "Glossário"
+description: "Definições de termos técnicos e conceitos da Judit API"
+---
+
+# Glossário
+
+Definições de termos técnicos, conceitos jurídicos e funcionalidades da Judit API.
+
+## A
+
+### API (Application Programming Interface)
+Interface de programação que permite comunicação entre diferentes sistemas de software. A Judit API oferece endpoints REST para consultas judiciais automatizadas.
+
+### API Key
+Chave de autenticação única que identifica e autoriza o acesso aos recursos da Judit API. Deve ser mantida em segurança e enviada no header `api-key` de todas as requisições.
+
+### Anexo (Attachment)
+Documento ou arquivo vinculado a um processo judicial, como petições, sentenças, despachos, certidões, etc. Podem ser baixados através da API quando disponíveis.
+
+### Autenticação
+Processo de verificação da identidade do usuário através da API Key. Necessária para acessar todos os endpoints da Judit API.
+
+## B
+
+### Backoff Exponencial
+Estratégia de retry onde o tempo de espera entre tentativas aumenta exponencialmente (1s, 2s, 4s, 8s...). Usado para evitar sobrecarga em caso de erros temporários.
+
+### Base URL
+URL principal dos endpoints da API. Varia por serviço:
+- Requests: `https://requests.prod.judit.io`
+- Responses: `https://responses.prod.judit.io`
+- Tracking: `https://tracking.prod.judit.io`
+
+## C
+
+### Cache
+Armazenamento temporário de dados para melhorar performance e reduzir requisições desnecessárias. Pode ser implementado no cliente ou fornecido pela API.
+
+### CNJ (Conselho Nacional de Justiça)
+Órgão que padronizou a numeração de processos judiciais no Brasil. Formato: `NNNNNNN-DD.AAAA.J.TR.OOOO`.
+
+### CNPJ (Cadastro Nacional da Pessoa Jurídica)
+Documento de identificação de empresas no Brasil. Formato: `XX.XXX.XXX/XXXX-XX`. Usado para consultar processos empresariais.
+
+### CPF (Cadastro de Pessoas Físicas)
+Documento de identificação de pessoas físicas no Brasil. Formato: `XXX.XXX.XXX-XX`. Usado para consultar processos individuais.
+
+### Credencial
+Informações de login (usuário/senha ou certificado) necessárias para acessar sistemas de tribunais que exigem autenticação. Armazenadas de forma criptografada no Vault.
+
+### Cursor
+Ponteiro usado na paginação para navegar através de grandes conjuntos de dados. Mais eficiente que paginação baseada em offset para datasets dinâmicos.
+
+## D
+
+### Documento
+Identificador usado para realizar consultas judiciais. Pode ser CPF, CNPJ, OAB ou número de processo (CNJ).
+
+### Due Diligence
+Processo de investigação detalhada sobre uma pessoa ou empresa, incluindo verificação de processos judiciais pendentes.
+
+## E
+
+### Endpoint
+URL específica da API que aceita requisições para uma funcionalidade particular (ex: `POST /requests` para criar consultas).
+
+### Erro 4xx
+Códigos de status HTTP que indicam erros do cliente (400-499), como dados inválidos, autenticação falha ou recurso não encontrado.
+
+### Erro 5xx
+Códigos de status HTTP que indicam erros do servidor (500-599), como falhas internas, indisponibilidade de serviços ou timeouts.
+
+## F
+
+### Filtro
+Parâmetro usado para limitar o escopo de consultas, como tribunal específico, período de datas ou tipo de processo.
+
+### Frontmatter
+Metadados no início de arquivos Markdown/MDX, delimitados por `---`. Usado pelo Mintlify para configurar título, descrição e outras propriedades da página.
+
+## H
+
+### Header HTTP
+Informações adicionais enviadas em requisições HTTP. A Judit API usa headers para autenticação (`api-key`) e controle de rate limiting.
+
+### Health Check
+Endpoint usado para verificar se a API está funcionando corretamente. Geralmente disponível em `/health`.
+
+## I
+
+### Instância
+Processo judicial específico identificado por número CNJ. Cada instância pode ter múltiplas movimentações e anexos.
+
+## J
+
+### JSON (JavaScript Object Notation)
+Formato de dados usado para comunicação entre cliente e API. Todas as requisições e respostas da Judit API usam JSON.
+
+### JWT (JSON Web Token)
+Padrão para tokens de autenticação. Não usado diretamente pela Judit API, que utiliza API Keys simples.
+
+## L
+
+### Log
+Registro de eventos e atividades do sistema, útil para debugging e monitoramento. O SDK Python oferece logging detalhado.
+
+## M
+
+### Metadata
+Dados adicionais sobre um recurso, como informações de contexto, tags ou referências internas do cliente.
+
+### Mintlify
+Plataforma de documentação usada para hospedar e renderizar a documentação da Judit API.
+
+### Movimento Processual
+Ação ou evento registrado em um processo judicial, como despachos, sentenças, audiências, etc.
+
+## O
+
+### OAB (Ordem dos Advogados do Brasil)
+Registro profissional de advogados. Número OAB pode ser usado para consultar processos onde o advogado atua.
+
+### Offset
+Método de paginação baseado em posição numérica. Menos eficiente que cursor para grandes datasets.
+
+## P
+
+### Paginação
+Divisão de grandes conjuntos de dados em páginas menores para melhorar performance e usabilidade.
+
+### Payload
+Dados enviados no corpo de uma requisição HTTP, geralmente em formato JSON.
+
+### Processo
+Ação judicial tramitando ou tramitada em tribunais brasileiros. Identificado por número CNJ único.
+
+## Q
+
+### Query Parameter
+Parâmetros enviados na URL de uma requisição GET para filtrar ou configurar a resposta (ex: `?page=1&limit=50`).
+
+### Quota
+Limite de uso de recursos da API, como número de consultas por mês ou requisições por minuto.
+
+## R
+
+### Rate Limiting
+Controle de frequência de requisições para evitar sobrecarga dos serviços. Implementado com limites por minuto/hora/dia.
+
+### Request (Requisição)
+1. Chamada HTTP feita para a API
+2. Consulta judicial criada na Judit API para buscar processos
+
+### Response (Resposta)
+1. Retorno de uma chamada HTTP
+2. Resultado de uma consulta judicial contendo processos encontrados
+
+### REST (Representational State Transfer)
+Arquitetura de APIs baseada em HTTP, usando métodos como GET, POST, PUT, DELETE.
+
+### Retry
+Tentativa de reexecutar uma requisição que falhou, geralmente com estratégia de backoff.
+
+## S
+
+### SDK (Software Development Kit)
+Biblioteca de software que facilita integração com a API. A Judit oferece SDK oficial em Python.
+
+### Status Code
+Código numérico HTTP que indica o resultado de uma requisição (200 = sucesso, 404 = não encontrado, etc.).
+
+## T
+
+### Timeout
+Tempo limite para uma operação ser concluída. Requisições que excedem o timeout são canceladas.
+
+### Token
+Chave de autenticação. Na Judit API, equivale à API Key.
+
+### Tracking
+Monitoramento automático de processos judiciais para detectar atualizações, novos movimentos ou anexos.
+
+### Tribunal
+Órgão do Poder Judiciário responsável por julgar processos. Exemplos: TJSP, TJRJ, TRF3, STJ.
+
+## U
+
+### URL (Uniform Resource Locator)
+Endereço web de um recurso. Na API, cada endpoint tem uma URL específica.
+
+### UUID (Universally Unique Identifier)
+Identificador único usado para recursos da API, como IDs de requisições e trackings.
+
+## V
+
+### Vault
+Sistema seguro de armazenamento de credenciais de tribunais, com criptografia e controle de acesso.
+
+### Validação
+Verificação de formato e consistência de dados antes do processamento (ex: validar formato de CPF).
+
+## W
+
+### Webhook
+URL fornecida pelo cliente para receber notificações automáticas quando eventos ocorrem (consulta concluída, processo atualizado, etc.).
+
+### Webhook Handler
+Função ou endpoint no sistema do cliente que processa notificações recebidas via webhook.
+
+## Exemplos de Uso dos Termos
+
+### Fluxo Típico de Consulta
+1. **Cliente** envia **requisição** com **API Key** para **endpoint** `/requests`
+2. **API** valida **documento** e cria **consulta** com **UUID** único
+3. **Consulta** é processada nos **tribunais** especificados nos **filtros**
+4. **Webhook** notifica quando **resposta** está disponível
+5. **Cliente** obtém **processos** encontrados via **endpoint** `/responses`
+
+### Monitoramento com Tracking
+1. **Cliente** cria **tracking** para **processo** específico
+2. **API** monitora **movimentos processuais** periodicamente
+3. **Webhook** é chamado quando há **atualizações**
+4. **Cliente** pode baixar novos **anexos** automaticamente
+
+### Tratamento de Erros
+1. **Requisição** retorna **status code** de erro
+2. **Cliente** verifica **rate limiting** nos **headers**
+3. Implementa **retry** com **backoff exponencial**
+4. **Logs** são gerados para **debugging**
+
+## Próximos Passos
+
+- **[Guia Rápido](/quickstart)**: Comece a usar a API
+- **[Autenticação](/authentication)**: Configure sua API Key
+- **[FAQ](/faq)**: Perguntas frequentes
+
+> **Dica**: Use Ctrl+F (Cmd+F no Mac) para buscar termos específicos neste glossário.

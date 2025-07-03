@@ -1,0 +1,701 @@
+---
+title: "Endpoints – Responses"
+description: "Documentação completa dos endpoints de respostas da Judit API"
+---
+
+# Endpoints – Responses
+
+Os endpoints de **responses** permitem consultar os resultados das requisições processadas pela Judit API.
+
+## Base URL
+
+```
+https://requests.prod.judit.io
+```
+
+## Visão Geral dos Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/responses` | Listar todas as respostas |
+| `GET` | `/responses/{response_id}` | Consultar resposta específica |
+
+---
+
+## GET /responses
+
+Lista todas as respostas disponíveis com paginação.
+
+### Parâmetros de Query
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `page` | integer | Número da página (padrão: 1) |
+| `page_size` | integer | Itens por página (padrão: 20, máx: 100) |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+# Listar primeira página
+curl -X GET "https://requests.prod.judit.io/responses?page=1&page_size=10" \
+  -H "api-key: $JUDIT_API_KEY"
+
+# Página específica
+curl -X GET "https://requests.prod.judit.io/responses?page=3&page_size=50" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+import requests
+import os
+
+api_key = os.getenv('JUDIT_API_KEY')
+headers = {
+    'api-key': api_key,
+    'Content-Type': 'application/json'
+}
+
+def get_responses(page=1, page_size=20):
+    """Lista respostas com paginação"""
+    params = {
+        'page': page,
+        'page_size': page_size
+    }
+    
+    response = requests.get(
+        'https://requests.prod.judit.io/responses',
+        headers=headers,
+        params=params
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    else:
+        print(f"Erro: {response.status_code}")
+        return None
+
+# Buscar primeira página de respostas
+responses_data = get_responses(page=1, page_size=25)
+
+if responses_data:
+    print(f"Total de respostas: {responses_data['meta']['total_items']}")
+    
+    for item in responses_data.get('page_data', []):
+        print(f"Response ID: {item.get('response_id', 'N/A')}")
+```
+
+**JavaScript:**
+```javascript
+const apiKey = process.env.JUDIT_API_KEY;
+
+const headers = {
+    'api-key': apiKey,
+    'Content-Type': 'application/json'
+};
+
+async function getResponses(page = 1, pageSize = 20) {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: pageSize.toString()
+    });
+    
+    try {
+        const response = await fetch(`https://requests.prod.judit.io/responses?${params}`, {
+            headers: headers
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return null;
+    }
+}
+
+// Buscar primeira página de respostas
+const responsesData = await getResponses(1, 25);
+
+if (responsesData) {
+    console.log(`Total de respostas: ${responsesData.meta.total_items}`);
+    
+    responsesData.page_data?.forEach(item => {
+        console.log(`Response ID: ${item.response_id || 'N/A'}`);
+    });
+}
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "page_data": [
+    {
+      "response_id": "resp_1234567890abcdef",
+      "request_id": "req_1234567890abcdef",
+      "status": "completed",
+      "data": {
+        "lawsuits": [
+          {
+            "cnj_code": "1234567-89.2023.1.23.4567",
+            "tribunal": "TJSP",
+            "instance": 1,
+            "subject": "Cobrança",
+            "parties": [
+              {
+                "name": "João Silva",
+                "type": "autor",
+                "document": "12345678901"
+              },
+              {
+                "name": "Maria Santos",
+                "type": "reu",
+                "document": "98765432100"
+              }
+            ],
+            "amount": 15000.00,
+            "distribution_date": "2023-01-15",
+            "last_update": "2023-12-01T10:30:00Z",
+            "status": "Em andamento",
+            "attachments_count": 5
+          }
+        ],
+        "summary": {
+          "total_lawsuits": 1,
+          "total_amount": 15000.00,
+          "tribunals": ["TJSP"],
+          "instances": [1]
+        }
+      },
+      "created_at": "2023-12-01T10:35:00Z",
+      "updated_at": "2023-12-01T10:35:00Z"
+    }
+  ],
+  "links": {
+    "next": "https://requests.prod.judit.io/responses?page=2",
+    "prev": null,
+    "first": "https://requests.prod.judit.io/responses?page=1",
+    "last": "https://requests.prod.judit.io/responses?page=8"
+  },
+  "meta": {
+    "current_page": 1,
+    "total_pages": 8,
+    "total_items": 156,
+    "per_page": 20,
+    "has_next": true,
+    "has_prev": false
+  }
+}
+```
+
+---
+
+## GET /responses/{response_id}
+
+Consulta uma resposta específica pelo ID.
+
+### Parâmetros de Path
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `response_id` | string | ID único da resposta |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X GET "https://requests.prod.judit.io/responses/resp_1234567890abcdef" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+def get_response_by_id(response_id):
+    """Consulta resposta específica pelo ID"""
+    response = requests.get(
+        f'https://requests.prod.judit.io/responses/{response_id}',
+        headers=headers
+    )
+    
+    if response.status_code == 200:
+        return response.json()
+    elif response.status_code == 404:
+        print(f"Resposta {response_id} não encontrada")
+        return None
+    else:
+        print(f"Erro: {response.status_code}")
+        return None
+
+# Consultar resposta específica
+response_data = get_response_by_id('resp_1234567890abcdef')
+
+if response_data:
+    print(f"Status: {response_data['status']}")
+    print(f"Total de processos: {response_data['data']['summary']['total_lawsuits']}")
+    
+    # Listar processos encontrados
+    for lawsuit in response_data['data']['lawsuits']:
+        print(f"CNJ: {lawsuit['cnj_code']}")
+        print(f"Tribunal: {lawsuit['tribunal']}")
+        print(f"Valor: R$ {lawsuit['amount']:,.2f}")
+```
+
+**JavaScript:**
+```javascript
+async function getResponseById(responseId) {
+    try {
+        const response = await fetch(`https://requests.prod.judit.io/responses/${responseId}`, {
+            headers: headers
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        } else if (response.status === 404) {
+            console.log(`Resposta ${responseId} não encontrada`);
+            return null;
+        } else {
+            console.error(`Erro: ${response.status}`);
+            return null;
+        }
+    } catch (error) {
+        console.error('Erro na requisição:', error);
+        return null;
+    }
+}
+
+// Consultar resposta específica
+const responseData = await getResponseById('resp_1234567890abcdef');
+
+if (responseData) {
+    console.log(`Status: ${responseData.status}`);
+    console.log(`Total de processos: ${responseData.data.summary.total_lawsuits}`);
+    
+    // Listar processos encontrados
+    responseData.data.lawsuits.forEach(lawsuit => {
+        console.log(`CNJ: ${lawsuit.cnj_code}`);
+        console.log(`Tribunal: ${lawsuit.tribunal}`);
+        console.log(`Valor: R$ ${lawsuit.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+    });
+}
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "response_id": "resp_1234567890abcdef",
+  "request_id": "req_1234567890abcdef",
+  "status": "completed",
+  "data": {
+    "lawsuits": [
+      {
+        "cnj_code": "1234567-89.2023.1.23.4567",
+        "tribunal": "TJSP",
+        "instance": 1,
+        "subject": "Cobrança",
+        "subject_code": "123",
+        "classification": "Cível",
+        "classification_code": "456",
+        "parties": [
+          {
+            "name": "João Silva",
+            "type": "autor",
+            "document": "12345678901",
+            "lawyer": {
+              "name": "Dr. Carlos Advogado",
+              "oab": "123456-SP"
+            }
+          },
+          {
+            "name": "Maria Santos",
+            "type": "reu",
+            "document": "98765432100"
+          }
+        ],
+        "amount": 15000.00,
+        "distribution_date": "2023-01-15",
+        "last_update": "2023-12-01T10:30:00Z",
+        "status": "Em andamento",
+        "court": "1ª Vara Cível",
+        "judge": "Dr. João Juiz",
+        "attachments_count": 5,
+        "movements": [
+          {
+            "date": "2023-01-15",
+            "description": "Distribuição",
+            "type": "distribuicao"
+          },
+          {
+            "date": "2023-02-01",
+            "description": "Citação",
+            "type": "citacao"
+          }
+        ],
+        "secret_justice": false,
+        "electronic": true
+      }
+    ],
+    "summary": {
+      "total_lawsuits": 1,
+      "total_amount": 15000.00,
+      "tribunals": ["TJSP"],
+      "instances": [1],
+      "subjects": ["Cobrança"],
+      "by_status": {
+        "Em andamento": 1,
+        "Arquivado": 0,
+        "Suspenso": 0
+      },
+      "by_side": {
+        "autor": 1,
+        "reu": 0
+      },
+      "date_range": {
+        "earliest": "2023-01-15",
+        "latest": "2023-01-15"
+      }
+    }
+  },
+  "search_info": {
+    "search_type": "cpf",
+    "search_key": "12345678901",
+    "response_type": "lawsuit",
+    "filters_applied": {
+      "side": "autor",
+      "amount_gte": 5000
+    }
+  },
+  "processing_info": {
+    "duration_seconds": 45,
+    "tribunals_consulted": ["TJSP"],
+    "cache_used": false,
+    "last_tribunal_update": "2023-12-01T10:00:00Z"
+  },
+  "created_at": "2023-12-01T10:35:00Z",
+  "updated_at": "2023-12-01T10:35:00Z"
+}
+```
+
+## Estrutura dos Dados de Resposta
+
+### Dados do Processo (Lawsuit)
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `cnj_code` | string | Código CNJ do processo |
+| `tribunal` | string | Tribunal de origem (TJSP, TJRJ, etc.) |
+| `instance` | integer | Instância do processo (1, 2, 3) |
+| `subject` | string | Assunto do processo |
+| `subject_code` | string | Código do assunto |
+| `classification` | string | Classificação (Cível, Criminal, etc.) |
+| `classification_code` | string | Código da classificação |
+| `amount` | number | Valor da causa |
+| `distribution_date` | string | Data de distribuição (YYYY-MM-DD) |
+| `last_update` | string | Última atualização (ISO 8601) |
+| `status` | string | Status atual do processo |
+| `court` | string | Vara/Juízo |
+| `judge` | string | Nome do juiz |
+| `secret_justice` | boolean | Se está em segredo de justiça |
+| `electronic` | boolean | Se é processo eletrônico |
+
+### Dados das Partes (Parties)
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `name` | string | Nome da parte |
+| `type` | string | Tipo: "autor", "reu", "terceiro" |
+| `document` | string | CPF/CNPJ |
+| `lawyer` | object | Dados do advogado (opcional) |
+| `lawyer.name` | string | Nome do advogado |
+| `lawyer.oab` | string | Número da OAB |
+
+### Resumo (Summary)
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `total_lawsuits` | integer | Total de processos encontrados |
+| `total_amount` | number | Soma dos valores das causas |
+| `tribunals` | array | Lista de tribunais |
+| `instances` | array | Lista de instâncias |
+| `subjects` | array | Lista de assuntos |
+| `by_status` | object | Contagem por status |
+| `by_side` | object | Contagem por lado da parte |
+| `date_range` | object | Intervalo de datas |
+
+## Fluxo Completo: Request → Response
+
+### 1. Criar Requisição e Aguardar Resposta
+
+```python
+def create_and_wait_for_response(search_type, search_key, timeout=300):
+    """Cria requisição e aguarda resposta completa"""
+    
+    # 1. Criar requisição
+    payload = {
+        "search": {
+            "search_type": search_type,
+            "search_key": search_key,
+            "response_type": "lawsuit",
+            "cache_ttl_in_days": 1
+        }
+    }
+    
+    response = requests.post(
+        'https://requests.prod.judit.io/requests',
+        json=payload,
+        headers=headers
+    )
+    
+    if response.status_code != 200:
+        print(f"Erro ao criar requisição: {response.status_code}")
+        return None
+    
+    request_data = response.json()
+    request_id = request_data['request_id']
+    print(f"Requisição criada: {request_id}")
+    
+    # 2. Aguardar processamento
+    start_time = time.time()
+    
+    while time.time() - start_time < timeout:
+        # Verificar status da requisição
+        status_response = requests.get(
+            f'https://requests.prod.judit.io/requests/{request_id}',
+            headers=headers
+        )
+        
+        if status_response.status_code == 200:
+            status_data = status_response.json()
+            print(f"Status: {status_data['status']}")
+            
+            if status_data['status'] == 'completed':
+                # 3. Buscar resposta
+                return find_response_by_request_id(request_id)
+            elif status_data['status'] == 'failed':
+                print("Requisição falhou")
+                return None
+        
+        time.sleep(5)  # Aguardar 5 segundos
+    
+    print("Timeout aguardando processamento")
+    return None
+
+def find_response_by_request_id(request_id):
+    """Encontra resposta pelo request_id"""
+    page = 1
+    
+    while page <= 10:  # Limitar busca a 10 páginas
+        responses_data = get_responses(page=page, page_size=50)
+        
+        if not responses_data:
+            break
+        
+        for response_item in responses_data.get('page_data', []):
+            if response_item.get('request_id') == request_id:
+                # Buscar dados completos da resposta
+                return get_response_by_id(response_item['response_id'])
+        
+        if not responses_data.get('meta', {}).get('has_next'):
+            break
+        
+        page += 1
+    
+    return None
+
+# Uso completo
+result = create_and_wait_for_response('cpf', '12345678901')
+
+if result:
+    print(f"Processos encontrados: {result['data']['summary']['total_lawsuits']}")
+    for lawsuit in result['data']['lawsuits']:
+        print(f"- {lawsuit['cnj_code']} ({lawsuit['tribunal']})")
+```
+
+### 2. Buscar Respostas Recentes
+
+```python
+def get_recent_responses(hours=24):
+    """Busca respostas das últimas N horas"""
+    from datetime import datetime, timedelta
+    
+    cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+    recent_responses = []
+    page = 1
+    
+    while True:
+        responses_data = get_responses(page=page, page_size=50)
+        
+        if not responses_data:
+            break
+        
+        for response_item in responses_data.get('page_data', []):
+            created_at = datetime.fromisoformat(
+                response_item['created_at'].replace('Z', '+00:00')
+            )
+            
+            if created_at >= cutoff_time:
+                recent_responses.append(response_item)
+            else:
+                # Como as respostas são ordenadas por data, podemos parar
+                return recent_responses
+        
+        if not responses_data.get('meta', {}).get('has_next'):
+            break
+        
+        page += 1
+    
+    return recent_responses
+
+# Buscar respostas das últimas 6 horas
+recent = get_recent_responses(hours=6)
+print(f"Respostas recentes: {len(recent)}")
+```
+
+## Tratamento de Diferentes Tipos de Resposta
+
+### Response Type: lawsuit
+
+```python
+def process_lawsuit_response(response_data):
+    """Processa resposta do tipo lawsuit"""
+    lawsuits = response_data['data']['lawsuits']
+    
+    for lawsuit in lawsuits:
+        print(f"Processo: {lawsuit['cnj_code']}")
+        print(f"Tribunal: {lawsuit['tribunal']}")
+        print(f"Valor: R$ {lawsuit['amount']:,.2f}")
+        
+        # Processar partes
+        for party in lawsuit['parties']:
+            print(f"  {party['type'].title()}: {party['name']}")
+```
+
+### Response Type: parties
+
+```python
+def process_parties_response(response_data):
+    """Processa resposta do tipo parties"""
+    parties_data = response_data['data']['parties']
+    
+    for party_info in parties_data:
+        print(f"Nome: {party_info['name']}")
+        print(f"Documento: {party_info['document']}")
+        print(f"Processos: {len(party_info['lawsuits'])}")
+```
+
+### Response Type: attachments
+
+```python
+def process_attachments_response(response_data):
+    """Processa resposta do tipo attachments"""
+    attachments = response_data['data']['attachments']
+    
+    for attachment in attachments:
+        print(f"Arquivo: {attachment['filename']}")
+        print(f"Tipo: {attachment['type']}")
+        print(f"Tamanho: {attachment['size']} bytes")
+        print(f"URL: {attachment['download_url']}")
+```
+
+## Códigos de Resposta
+
+| Código | Descrição |
+|--------|-----------|
+| `200` | Sucesso |
+| `401` | API Key inválida |
+| `403` | Acesso negado |
+| `404` | Resposta não encontrada |
+| `429` | Rate limit excedido |
+| `500` | Erro interno do servidor |
+
+## Boas Práticas
+
+### 1. **Paginação Eficiente**
+
+```python
+def get_all_responses():
+    """Busca todas as respostas de forma eficiente"""
+    all_responses = []
+    page = 1
+    
+    while True:
+        responses_data = get_responses(page=page, page_size=100)  # Máximo por página
+        
+        if not responses_data or not responses_data.get('page_data'):
+            break
+        
+        all_responses.extend(responses_data['page_data'])
+        
+        if not responses_data.get('meta', {}).get('has_next'):
+            break
+        
+        page += 1
+        time.sleep(0.1)  # Pequeno delay para rate limiting
+    
+    return all_responses
+```
+
+### 2. **Cache Local**
+
+```python
+import json
+from pathlib import Path
+
+def cache_response(response_id, response_data, cache_dir='./cache'):
+    """Salva resposta em cache local"""
+    cache_path = Path(cache_dir)
+    cache_path.mkdir(exist_ok=True)
+    
+    file_path = cache_path / f"{response_id}.json"
+    
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(response_data, f, ensure_ascii=False, indent=2)
+
+def load_cached_response(response_id, cache_dir='./cache'):
+    """Carrega resposta do cache local"""
+    file_path = Path(cache_dir) / f"{response_id}.json"
+    
+    if file_path.exists():
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    
+    return None
+```
+
+### 3. **Processamento em Lote**
+
+```python
+def process_responses_batch(response_ids, batch_size=10):
+    """Processa respostas em lotes"""
+    results = []
+    
+    for i in range(0, len(response_ids), batch_size):
+        batch = response_ids[i:i + batch_size]
+        batch_results = []
+        
+        for response_id in batch:
+            response_data = get_response_by_id(response_id)
+            if response_data:
+                batch_results.append(response_data)
+        
+        results.extend(batch_results)
+        
+        # Delay entre lotes para rate limiting
+        if i + batch_size < len(response_ids):
+            time.sleep(1)
+    
+    return results
+```
+
+## Próximos Passos
+
+- **[Tracking](/endpoints/tracking)**: Monitoramento automático de processos
+- **[Tratamento de Erros](/errors)**: Como lidar com erros da API
+- **[SDK Python](/sdk)**: Biblioteca oficial para integração
+
+> **Importante**: Respostas ficam disponíveis por 30 dias. Para dados críticos, implemente cache local.

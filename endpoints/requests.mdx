@@ -1,0 +1,722 @@
+---
+title: "Endpoints – Requests"
+description: "Documentação completa dos endpoints de requisições da Judit API"
+---
+
+# Endpoints – Requests
+
+Os endpoints de **requests** são responsáveis por criar e gerenciar consultas judiciais na Judit API.
+
+## Base URL
+
+```
+https://requests.prod.judit.io
+```
+
+## Visão Geral dos Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `POST` | `/requests` | Criar nova requisição |
+| `GET` | `/requests` | Listar requisições |
+| `GET` | `/requests/{request_id}` | Consultar requisição específica |
+| `POST` | `/requests/count` | Contar processos |
+| `POST` | `/requests/create/grouped` | Consulta histórica agrupada |
+
+---
+
+## POST /requests
+
+Cria uma nova requisição de consulta judicial.
+
+### Parâmetros
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj|oab|lawsuit_cnj|custom",
+    "search_key": "string",
+    "response_type": "lawsuit|parties|attachments|step|lawsuits",
+    "cache_ttl_in_days": 7,
+    "search_params": {
+      "lawsuit_instance": 1,
+      "masked_response": "string",
+      "filter": {
+        "side": "autor|reu",
+        "distribution_date_gte": "2023-01-01",
+        "amount_gte": 10000,
+        "amount_lte": 100000,
+        "tribunals": {
+          "keys": ["TJSP", "TJRJ"],
+          "not_equal": false
+        },
+        "subject_codes": {
+          "keys": ["123", "456"],
+          "not_equal": false
+        },
+        "classification_codes": {
+          "keys": ["789", "012"],
+          "not_equal": false
+        }
+      },
+      "credential": {
+        "customer_key": "string"
+      }
+    }
+  }
+}
+```
+
+### Tipos de Busca
+
+#### Por CPF
+```json
+{
+  "search": {
+    "search_type": "cpf",
+    "search_key": "12345678901",
+    "response_type": "lawsuit"
+  }
+}
+```
+
+#### Por CNPJ
+```json
+{
+  "search": {
+    "search_type": "cnpj",
+    "search_key": "12345678000195",
+    "response_type": "lawsuit"
+  }
+}
+```
+
+#### Por OAB
+```json
+{
+  "search": {
+    "search_type": "oab",
+    "search_key": "123456-SP",
+    "response_type": "lawsuit"
+  }
+}
+```
+
+#### Por CNJ
+```json
+{
+  "search": {
+    "search_type": "lawsuit_cnj",
+    "search_key": "1234567-89.2023.1.23.4567",
+    "response_type": "lawsuit"
+  }
+}
+```
+
+### Tipos de Resposta
+
+| Tipo | Descrição |
+|------|-----------|
+| `lawsuit` | Dados completos do processo |
+| `parties` | Informações das partes envolvidas |
+| `attachments` | Lista de anexos disponíveis |
+| `step` | Movimentações processuais |
+| `lawsuits` | Múltiplos processos (consultas amplas) |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X POST "https://requests.prod.judit.io/requests" \
+  -H "api-key: $JUDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "search": {
+      "search_type": "cpf",
+      "search_key": "12345678901",
+      "response_type": "lawsuit",
+      "cache_ttl_in_days": 7,
+      "search_params": {
+        "filter": {
+          "side": "autor",
+          "amount_gte": 5000,
+          "tribunals": {
+            "keys": ["TJSP"],
+            "not_equal": false
+          }
+        }
+      }
+    }
+  }'
+```
+
+**Python:**
+```python
+import requests
+import os
+
+api_key = os.getenv('JUDIT_API_KEY')
+headers = {
+    'api-key': api_key,
+    'Content-Type': 'application/json'
+}
+
+payload = {
+    "search": {
+        "search_type": "cpf",
+        "search_key": "12345678901",
+        "response_type": "lawsuit",
+        "cache_ttl_in_days": 7,
+        "search_params": {
+            "filter": {
+                "side": "autor",
+                "amount_gte": 5000,
+                "tribunals": {
+                    "keys": ["TJSP"],
+                    "not_equal": False
+                }
+            }
+        }
+    }
+}
+
+response = requests.post(
+    'https://requests.prod.judit.io/requests',
+    json=payload,
+    headers=headers
+)
+
+if response.status_code == 200:
+    request_data = response.json()
+    print(f"Requisição criada: {request_data['request_id']}")
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+**JavaScript:**
+```javascript
+const apiKey = process.env.JUDIT_API_KEY;
+
+const payload = {
+    search: {
+        search_type: 'cpf',
+        search_key: '12345678901',
+        response_type: 'lawsuit',
+        cache_ttl_in_days: 7,
+        search_params: {
+            filter: {
+                side: 'autor',
+                amount_gte: 5000,
+                tribunals: {
+                    keys: ['TJSP'],
+                    not_equal: false
+                }
+            }
+        }
+    }
+};
+
+const response = await fetch('https://requests.prod.judit.io/requests', {
+    method: 'POST',
+    headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+});
+
+if (response.ok) {
+    const requestData = await response.json();
+    console.log(`Requisição criada: ${requestData.request_id}`);
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "request_id": "req_1234567890abcdef",
+  "search": {
+    "search_type": "cpf",
+    "search_key": "12345678901",
+    "response_type": "lawsuit",
+    "cache_ttl_in_days": 7
+  },
+  "origin": "api",
+  "origin_id": "user_12345",
+  "status": "pending",
+  "created_at": "2023-12-01T10:30:00Z",
+  "updated_at": "2023-12-01T10:30:00Z",
+  "tags": {
+    "client": "exemplo",
+    "priority": "high"
+  }
+}
+```
+
+---
+
+## GET /requests
+
+Lista todas as requisições criadas.
+
+### Parâmetros de Query
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `page` | integer | Número da página (padrão: 1) |
+| `page_size` | integer | Itens por página (padrão: 20, máx: 100) |
+| `status` | string | Filtrar por status: `pending`, `processing`, `completed`, `failed` |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+# Listar primeira página
+curl -X GET "https://requests.prod.judit.io/requests?page=1&page_size=10" \
+  -H "api-key: $JUDIT_API_KEY"
+
+# Filtrar por status
+curl -X GET "https://requests.prod.judit.io/requests?status=completed" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+def get_requests(page=1, page_size=20, status=None):
+    """Lista requisições com filtros opcionais"""
+    params = {
+        'page': page,
+        'page_size': page_size
+    }
+    
+    if status:
+        params['status'] = status
+    
+    response = requests.get(
+        'https://requests.prod.judit.io/requests',
+        headers=headers,
+        params=params
+    )
+    
+    return response.json() if response.status_code == 200 else None
+
+# Listar requisições completadas
+completed_requests = get_requests(status='completed', page_size=50)
+```
+
+**JavaScript:**
+```javascript
+async function getRequests(page = 1, pageSize = 20, status = null) {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: pageSize.toString()
+    });
+    
+    if (status) {
+        params.append('status', status);
+    }
+    
+    const response = await fetch(`https://requests.prod.judit.io/requests?${params}`, {
+        headers: { 'api-key': apiKey }
+    });
+    
+    return response.ok ? await response.json() : null;
+}
+
+// Listar requisições em processamento
+const processingRequests = await getRequests(1, 50, 'processing');
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "page_data": [
+    {
+      "request_id": "req_1234567890abcdef",
+      "search": {
+        "search_type": "cpf",
+        "search_key": "12345678901",
+        "response_type": "lawsuit"
+      },
+      "status": "completed",
+      "created_at": "2023-12-01T10:30:00Z",
+      "updated_at": "2023-12-01T10:35:00Z"
+    }
+  ],
+  "links": {
+    "next": "https://requests.prod.judit.io/requests?page=2",
+    "prev": null,
+    "first": "https://requests.prod.judit.io/requests?page=1",
+    "last": "https://requests.prod.judit.io/requests?page=5"
+  },
+  "meta": {
+    "current_page": 1,
+    "total_pages": 5,
+    "total_items": 100,
+    "per_page": 20,
+    "has_next": true,
+    "has_prev": false
+  }
+}
+```
+
+---
+
+## GET /requests/{request_id}
+
+Consulta uma requisição específica pelo ID.
+
+### Parâmetros de Path
+
+| Parâmetro | Tipo | Descrição |
+|-----------|------|-----------|
+| `request_id` | string | ID único da requisição |
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X GET "https://requests.prod.judit.io/requests/req_1234567890abcdef" \
+  -H "api-key: $JUDIT_API_KEY"
+```
+
+**Python:**
+```python
+def get_request_by_id(request_id):
+    """Consulta requisição específica"""
+    response = requests.get(
+        f'https://requests.prod.judit.io/requests/{request_id}',
+        headers=headers
+    )
+    
+    return response.json() if response.status_code == 200 else None
+
+# Consultar requisição específica
+request_data = get_request_by_id('req_1234567890abcdef')
+print(f"Status: {request_data['status']}")
+```
+
+**JavaScript:**
+```javascript
+async function getRequestById(requestId) {
+    const response = await fetch(`https://requests.prod.judit.io/requests/${requestId}`, {
+        headers: { 'api-key': apiKey }
+    });
+    
+    return response.ok ? await response.json() : null;
+}
+
+// Consultar requisição específica
+const requestData = await getRequestById('req_1234567890abcdef');
+console.log(`Status: ${requestData.status}`);
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "request_id": "req_1234567890abcdef",
+  "search": {
+    "search_type": "cpf",
+    "search_key": "12345678901",
+    "response_type": "lawsuit",
+    "cache_ttl_in_days": 7
+  },
+  "origin": "api",
+  "origin_id": "user_12345",
+  "status": "completed",
+  "created_at": "2023-12-01T10:30:00Z",
+  "updated_at": "2023-12-01T10:35:00Z",
+  "tags": {
+    "client": "exemplo",
+    "priority": "high"
+  }
+}
+```
+
+---
+
+## POST /requests/count
+
+Consulta a quantidade de processos sem retornar os dados completos.
+
+### Parâmetros
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj|oab|lawsuit_cnj",
+    "search_key": "string",
+    "search_params": {
+      "filter": {
+        // Mesmos filtros do POST /requests
+      }
+    }
+  }
+}
+```
+
+### Exemplos de Requisição
+
+**cURL:**
+```bash
+curl -X POST "https://requests.prod.judit.io/requests/count" \
+  -H "api-key: $JUDIT_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "search": {
+      "search_type": "cpf",
+      "search_key": "12345678901",
+      "search_params": {
+        "filter": {
+          "side": "autor",
+          "amount_gte": 10000
+        }
+      }
+    }
+  }'
+```
+
+**Python:**
+```python
+def count_processes(search_type, search_key, filters=None):
+    """Conta processos sem buscar dados completos"""
+    payload = {
+        "search": {
+            "search_type": search_type,
+            "search_key": search_key
+        }
+    }
+    
+    if filters:
+        payload["search"]["search_params"] = {"filter": filters}
+    
+    response = requests.post(
+        'https://requests.prod.judit.io/requests/count',
+        json=payload,
+        headers=headers
+    )
+    
+    return response.json() if response.status_code == 200 else None
+
+# Contar processos de um CPF como autor
+count_result = count_processes(
+    'cpf', 
+    '12345678901',
+    {'side': 'autor', 'amount_gte': 5000}
+)
+
+print(f"Total de processos: {count_result['total']}")
+```
+
+### Resposta de Sucesso (200)
+
+```json
+{
+  "total": 42
+}
+```
+
+---
+
+## POST /requests/create/grouped
+
+Cria consulta histórica agrupada para análises em lote.
+
+### Parâmetros
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj|oab",
+    "search_key": "string",
+    "response_type": "lawsuits",
+    "search_params": {
+      "filter": {
+        // Filtros avançados para agrupamento
+      }
+    }
+  }
+}
+```
+
+### Exemplos de Requisição
+
+**Python:**
+```python
+def create_grouped_request(search_type, search_key, filters=None):
+    """Cria consulta agrupada para análise histórica"""
+    payload = {
+        "search": {
+            "search_type": search_type,
+            "search_key": search_key,
+            "response_type": "lawsuits"
+        }
+    }
+    
+    if filters:
+        payload["search"]["search_params"] = {"filter": filters}
+    
+    response = requests.post(
+        'https://requests.prod.judit.io/requests/create/grouped',
+        json=payload,
+        headers=headers
+    )
+    
+    return response.json() if response.status_code == 200 else None
+
+# Criar consulta agrupada
+grouped_result = create_grouped_request(
+    'cnpj',
+    '12345678000195',
+    {
+        'distribution_date_gte': '2020-01-01',
+        'tribunals': {
+            'keys': ['TJSP', 'TJRJ', 'TJMG'],
+            'not_equal': False
+        }
+    }
+)
+```
+
+---
+
+## Status de Requisições
+
+| Status | Descrição |
+|--------|-----------|
+| `pending` | Requisição criada, aguardando processamento |
+| `processing` | Consultando tribunais |
+| `completed` | Processamento concluído com sucesso |
+| `failed` | Erro durante o processamento |
+| `cached` | Resultado obtido do cache |
+
+## Códigos de Resposta
+
+| Código | Descrição |
+|--------|-----------|
+| `200` | Sucesso |
+| `400` | Parâmetros inválidos |
+| `401` | API Key inválida |
+| `403` | Acesso negado |
+| `404` | Requisição não encontrada |
+| `429` | Rate limit excedido |
+| `500` | Erro interno do servidor |
+
+## Filtros Avançados
+
+### Filtro por Lado da Parte
+```json
+{
+  "filter": {
+    "side": "autor"  // ou "reu"
+  }
+}
+```
+
+### Filtro por Valor
+```json
+{
+  "filter": {
+    "amount_gte": 10000,    // Valor mínimo
+    "amount_lte": 100000    // Valor máximo
+  }
+}
+```
+
+### Filtro por Data
+```json
+{
+  "filter": {
+    "distribution_date_gte": "2023-01-01"
+  }
+}
+```
+
+### Filtro por Tribunais
+```json
+{
+  "filter": {
+    "tribunals": {
+      "keys": ["TJSP", "TJRJ", "TJMG"],
+      "not_equal": false  // true para excluir estes tribunais
+    }
+  }
+}
+```
+
+### Filtro por Assunto
+```json
+{
+  "filter": {
+    "subject_codes": {
+      "keys": ["123", "456", "789"],
+      "not_equal": false
+    }
+  }
+}
+```
+
+## Boas Práticas
+
+### 1. **Use Cache Inteligente**
+```json
+{
+  "cache_ttl_in_days": 7  // Cache por 7 dias para dados estáveis
+}
+```
+
+### 2. **Monitore Status**
+```python
+def wait_for_completion(request_id, timeout=300):
+    """Aguarda conclusão da requisição"""
+    start_time = time.time()
+    
+    while time.time() - start_time < timeout:
+        request_data = get_request_by_id(request_id)
+        
+        if request_data['status'] in ['completed', 'failed']:
+            return request_data
+        
+        time.sleep(5)  # Aguardar 5 segundos
+    
+    raise TimeoutError("Timeout aguardando conclusão da requisição")
+```
+
+### 3. **Use Filtros Específicos**
+```python
+# Mais eficiente: filtrar no servidor
+filtered_request = {
+    "search": {
+        "search_type": "cpf",
+        "search_key": "12345678901",
+        "response_type": "lawsuit",
+        "search_params": {
+            "filter": {
+                "side": "autor",
+                "amount_gte": 5000,
+                "tribunals": {"keys": ["TJSP"], "not_equal": False}
+            }
+        }
+    }
+}
+
+# Menos eficiente: filtrar no cliente
+# all_requests = create_request_without_filters()
+# filtered_locally = filter_results(all_requests)
+```
+
+## Próximos Passos
+
+- **[Responses](/endpoints/responses)**: Como consultar resultados
+- **[Tracking](/endpoints/tracking)**: Monitoramento automático
+- **[SDK Python](/sdk)**: Biblioteca oficial para integração
+
+> **Dica**: Use `POST /requests/count` para verificar volume antes de fazer consultas completas.

@@ -1,0 +1,297 @@
+---
+title: "Changelog"
+description: "Histórico de versões, atualizações e melhorias da Judit API"
+---
+
+# Changelog
+
+Acompanhe todas as atualizações, melhorias e correções da Judit API.
+
+## [v2.1.0] - 2024-01-15
+
+### ✨ Novidades
+- **Tracking Avançado**: Configurações personalizadas de frequência de monitoramento
+- **Filtros Inteligentes**: Novos filtros por tipo de movimento processual
+- **SDK Python v2.1**: Suporte completo a async/await
+- **Webhook Retry**: Retry automático para webhooks que falharam
+
+### 🚀 Melhorias
+- **Performance**: Consultas 40% mais rápidas em média
+- **Cache Inteligente**: Cache automático para consultas repetidas
+- **Rate Limiting**: Limites mais flexíveis para planos Enterprise
+- **Documentação**: Nova seção de exemplos práticos
+
+### 🐛 Correções
+- Corrigido timeout em consultas do TJSP durante picos de tráfego
+- Resolvido problema de encoding em anexos com caracteres especiais
+- Corrigida paginação inconsistente em listas grandes de processos
+
+### 🔧 Alterações Técnicas
+- Migração para nova infraestrutura de alta disponibilidade
+- Implementação de circuit breakers para tribunais instáveis
+- Otimização de queries no banco de dados
+
+---
+
+## [v2.0.0] - 2023-12-01
+
+### 🎉 Release Principal
+- **Nova Arquitetura**: Microserviços independentes por funcionalidade
+- **Vault Seguro**: Sistema criptografado para credenciais de tribunais
+- **Tracking em Tempo Real**: Monitoramento contínuo de processos
+- **API Unificada**: Endpoints consistentes para todos os recursos
+
+### ✨ Novidades
+- **Consultas por OAB**: Busque processos por número de advogado
+- **Anexos Automáticos**: Download automático de documentos
+- **Webhooks Avançados**: Payload estruturado com metadados
+- **Dashboard Analytics**: Métricas de uso em tempo real
+
+### 🚀 Melhorias
+- **Uptime 99.9%**: Nova infraestrutura de alta disponibilidade
+- **Latência Reduzida**: Tempo de resposta 60% menor
+- **Escalabilidade**: Suporte a 10x mais requisições simultâneas
+- **Segurança**: Criptografia end-to-end para dados sensíveis
+
+### ⚠️ Breaking Changes
+- **Endpoints Antigos**: URLs v1.x descontinuadas (migração obrigatória)
+- **Formato de Resposta**: Nova estrutura JSON padronizada
+- **Autenticação**: API Keys antigas precisam ser renovadas
+- **Rate Limits**: Novos limites por plano de assinatura
+
+### 📚 Documentação
+- **Guia de Migração**: Passo a passo para atualizar integração
+- **SDK Atualizado**: Nova versão com breaking changes
+- **Exemplos Práticos**: Casos de uso reais documentados
+
+---
+
+## [v1.8.2] - 2023-10-15
+
+### 🐛 Correções
+- Corrigido erro de parsing em processos do TRF4
+- Resolvido problema de duplicação em trackings
+- Corrigida validação de números CNJ com dígitos específicos
+
+### 🚀 Melhorias
+- Otimização de consultas em tribunais do trabalho
+- Melhoria na detecção de processos arquivados
+- Redução de falsos positivos em alertas de tracking
+
+---
+
+## [v1.8.1] - 2023-09-20
+
+### 🐛 Correções Críticas
+- Corrigido vazamento de memória em consultas longas
+- Resolvido deadlock em processamento paralelo
+- Corrigida inconsistência em timestamps de webhooks
+
+### 🔧 Melhorias de Estabilidade
+- Implementação de health checks mais robustos
+- Melhoria no tratamento de timeouts de tribunais
+- Otimização de conexões de banco de dados
+
+---
+
+## [v1.8.0] - 2023-08-30
+
+### ✨ Novidades
+- **Consultas Batch**: Processe múltiplos documentos em uma requisição
+- **Filtros Temporais**: Busque processos por período específico
+- **Metadados Customizados**: Adicione informações próprias às consultas
+- **Webhook Signatures**: Validação de autenticidade das notificações
+
+### 🚀 Melhorias
+- **Performance**: Consultas paralelas para múltiplos tribunais
+- **Reliability**: Retry automático para falhas temporárias
+- **Monitoring**: Métricas detalhadas de performance por tribunal
+- **Caching**: Cache inteligente para consultas frequentes
+
+### 🐛 Correções
+- Corrigido parsing de datas em formatos não padronizados
+- Resolvido problema de encoding em nomes com acentos
+- Corrigida paginação em listas com mais de 10.000 itens
+
+---
+
+## [v1.7.3] - 2023-07-10
+
+### 🐛 Correções
+- Corrigido timeout em consultas do TJMG
+- Resolvido problema de certificados SSL em alguns tribunais
+- Corrigida validação de CPF com zeros à esquerda
+
+### 🚀 Melhorias
+- Melhoria na detecção de processos sigilosos
+- Otimização de consultas em horários de pico
+- Redução de latência em 15% em média
+
+---
+
+## [v1.7.2] - 2023-06-15
+
+### 🐛 Correções Críticas
+- Corrigido erro de autenticação em tribunais federais
+- Resolvido problema de parsing em anexos PDF
+- Corrigida duplicação de notificações de webhook
+
+### 🔧 Melhorias Técnicas
+- Implementação de circuit breaker para tribunais instáveis
+- Melhoria no sistema de logs para debugging
+- Otimização de queries de banco de dados
+
+---
+
+## [v1.7.1] - 2023-05-20
+
+### 🐛 Correções
+- Corrigido erro de validação em números OAB
+- Resolvido problema de timeout em consultas complexas
+- Corrigida formatação de datas em respostas JSON
+
+### 🚀 Melhorias
+- Melhoria na detecção de processos em segredo de justiça
+- Otimização de consultas em tribunais eleitorais
+- Redução de false positives em alertas
+
+---
+
+## [v1.7.0] - 2023-04-25
+
+### ✨ Novidades
+- **Suporte a Tribunais Eleitorais**: TSE e TREs estaduais
+- **Consultas por Número de Processo**: Busca direta por CNJ
+- **Anexos em Base64**: Opção de receber anexos codificados
+- **Webhooks com Retry**: Tentativas automáticas em caso de falha
+
+### 🚀 Melhorias
+- **Cobertura Expandida**: +15 novos tribunais suportados
+- **Performance**: Redução de 30% no tempo de consulta
+- **Reliability**: Uptime melhorado para 99.5%
+- **Documentation**: Exemplos em múltiplas linguagens
+
+### 🐛 Correções
+- Corrigido parsing de processos com numeração antiga
+- Resolvido problema de encoding em tribunais específicos
+- Corrigida paginação em consultas com muitos resultados
+
+---
+
+## [v1.6.2] - 2023-03-10
+
+### 🐛 Correções
+- Corrigido erro de parsing em processos do STJ
+- Resolvido problema de timeout em consultas do TJRS
+- Corrigida validação de CNPJ com formatação específica
+
+### 🚀 Melhorias
+- Melhoria na detecção de processos conexos
+- Otimização de consultas em tribunais militares
+- Redução de latência em consultas por CPF
+
+---
+
+## [v1.6.1] - 2023-02-15
+
+### 🐛 Correções Críticas
+- Corrigido vazamento de conexões de banco
+- Resolvido deadlock em processamento concorrente
+- Corrigida inconsistência em status de consultas
+
+### 🔧 Melhorias de Infraestrutura
+- Implementação de load balancing aprimorado
+- Melhoria no sistema de monitoramento
+- Otimização de uso de memória
+
+---
+
+## [v1.6.0] - 2023-01-20
+
+### ✨ Novidades
+- **SDK Python Oficial**: Biblioteca completa para integração
+- **Rate Limiting Inteligente**: Limites adaptativos por uso
+- **Consultas Assíncronas**: Processamento em background
+- **Dashboard de Métricas**: Interface para acompanhar uso
+
+### 🚀 Melhorias
+- **Escalabilidade**: Suporte a 5x mais requisições simultâneas
+- **Monitoring**: Alertas proativos de indisponibilidade
+- **Security**: Implementação de OWASP security headers
+- **Performance**: Cache distribuído para consultas frequentes
+
+### 🐛 Correções
+- Corrigido parsing de processos com caracteres especiais
+- Resolvido problema de duplicação em resultados
+- Corrigida validação de documentos com formatação não padrão
+
+---
+
+## Roadmap 2024
+
+### 🎯 Próximas Funcionalidades
+- **IA para Análise Processual**: Classificação automática de processos
+- **API GraphQL**: Consultas mais flexíveis e eficientes
+- **Integração com Cartórios**: Consultas a registros públicos
+- **Mobile SDK**: Bibliotecas para iOS e Android
+
+### 🚀 Melhorias Planejadas
+- **Performance**: Meta de 99.99% de uptime
+- **Cobertura**: Todos os tribunais brasileiros
+- **Latência**: Tempo de resposta < 100ms
+- **Escalabilidade**: Suporte a 1M+ consultas/dia
+
+### 🔧 Modernização Técnica
+- **Kubernetes**: Migração completa para containers
+- **Observability**: Tracing distribuído completo
+- **Security**: Certificação SOC 2 Type II
+- **Green Computing**: Infraestrutura carbon-neutral
+
+---
+
+## Como Acompanhar Atualizações
+
+### 📧 Notificações
+- **Email**: Cadastre-se em [updates.judit.io](https://updates.judit.io)
+- **Webhook**: Configure endpoint para receber notificações automáticas
+- **RSS**: Feed disponível em [docs.judit.io/changelog.rss](https://docs.judit.io/changelog.rss)
+
+### 🔔 Alertas Importantes
+- **Breaking Changes**: Notificação 60 dias antes
+- **Deprecations**: Aviso 90 dias antes da remoção
+- **Security Updates**: Notificação imediata
+
+### 📱 Canais de Comunicação
+- **Status Page**: [status.judit.io](https://status.judit.io)
+- **Developer Blog**: [blog.judit.io](https://blog.judit.io)
+- **Community**: [community.judit.io](https://community.judit.io)
+
+---
+
+## Política de Versionamento
+
+### 📋 Semantic Versioning
+Seguimos o padrão [SemVer](https://semver.org/):
+- **MAJOR**: Breaking changes que requerem alterações no código
+- **MINOR**: Novas funcionalidades compatíveis com versão anterior
+- **PATCH**: Correções de bugs e melhorias menores
+
+### 🔄 Ciclo de Release
+- **Major Releases**: 2x por ano (Junho e Dezembro)
+- **Minor Releases**: Mensalmente
+- **Patch Releases**: Conforme necessário (bugs críticos)
+
+### ⚠️ Deprecation Policy
+- **Aviso Prévio**: 90 dias para funcionalidades descontinuadas
+- **Suporte Estendido**: 6 meses após deprecation
+- **Migração Assistida**: Guias e ferramentas de migração
+
+---
+
+## Próximos Passos
+
+- **[Guia de Migração](/migration)**: Como atualizar para versões mais recentes
+- **[Breaking Changes](/breaking-changes)**: Lista completa de mudanças incompatíveis
+- **[Suporte](/support)**: Como obter ajuda com atualizações
+
+> **Dica**: Configure webhooks para receber notificações automáticas de atualizações importantes!
