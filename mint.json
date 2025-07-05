@@ -62,6 +62,12 @@
       ]
     },
     {
+      "group": "API Reference",
+      "pages": [
+        "api-reference"
+      ]
+    },
+    {
       "group": "Endpoints",
       "pages": [
         "endpoints/requests",

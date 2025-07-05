@@ -1,0 +1,498 @@
+---
+title: "API Reference"
+description: "Referência técnica completa da Judit API com todos os endpoints, schemas e especificações"
+---
+
+# API Reference
+
+Referência técnica completa da Judit API com especificações detalhadas de todos os endpoints, parâmetros, schemas e códigos de resposta.
+
+## Base URLs
+
+| Serviço | URL Base |
+|---------|----------|
+| **Requests** | `https://requests.prod.judit.io` |
+| **Lawsuits** | `https://lawsuits.production.judit.io` |
+| **Tracking** | `https://tracking.prod.judit.io` |
+| **Crawler** | `https://crawler.prod.judit.io` |
+
+## Autenticação
+
+Todos os endpoints requerem autenticação via API Key no header:
+
+```
+api-key: YOUR_API_KEY
+```
+
+---
+
+## Requests Service
+
+### GET /requests
+
+**Descrição:** Consultar requisições criadas
+
+**Parâmetros Query:**
+- `page` (integer, opcional): Número da página
+- `page_size` (integer, opcional): Tamanho da página
+- `status` (string, opcional): Filtro por status
+
+**Resposta 200:**
+```json
+{
+  "page_data": [
+    {
+      "request_id": "string",
+      "search": { /* Search Object */ },
+      "origin": "string",
+      "origin_id": "string", 
+      "status": "string",
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z",
+      "tags": {}
+    }
+  ]
+}
+```
+
+### POST /requests
+
+**Descrição:** Criar uma nova requisição
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj|oab|lawsuit_cnj|lawsuit_id|custom",
+    "search_key": "string",
+    "response_type": "lawsuit|parties|attachments|step|lawsuits",
+    "cache_ttl_in_days": 7,
+    "search_params": {
+      "lawsuit_instance": 1,
+      "masked_response": "string",
+      "filter": {
+        "side": "autor|reu",
+        "distribution_date_gte": "2023-01-01",
+        "amount_gte": 10000,
+        "amount_lte": 100000,
+        "tribunals": {
+          "tjsp": true,
+          "tjrj": true
+        }
+      }
+    }
+  }
+}
+```
+
+**Resposta 200:**
+```json
+{
+  "request_id": "string",
+  "search": { /* Search Object */ },
+  "origin": "string",
+  "origin_id": "string",
+  "status": "string",
+  "created_at": "2023-01-01T00:00:00Z",
+  "updated_at": "2023-01-01T00:00:00Z",
+  "tags": {}
+}
+```
+
+### GET /requests/{request_id}
+
+**Descrição:** Consultar requisição específica
+
+**Parâmetros Path:**
+- `request_id` (string, obrigatório): ID da requisição
+
+**Resposta 200:** Mesmo schema do POST /requests
+
+### POST /requests/count
+
+**Descrição:** Consultar quantidade de processos
+
+**Body:** Mesmo schema do POST /requests
+
+**Resposta 200:**
+```json
+{
+  "total": 0
+}
+```
+
+### POST /requests/create/grouped
+
+**Descrição:** Consulta histórica agrupada
+
+**Body:** Mesmo schema do POST /requests
+
+**Resposta 200:**
+```json
+{
+  /* Dados agrupados */
+}
+```
+
+---
+
+## Responses Service
+
+### GET /responses
+
+**Descrição:** Consultar respostas
+
+**Parâmetros Query:**
+- `page` (integer, opcional): Número da página
+
+**Resposta 200:**
+```json
+{
+  /* Lista de respostas */
+}
+```
+
+### GET /responses/{response_id}
+
+**Descrição:** Consultar resposta específica
+
+**Parâmetros Path:**
+- `response_id` (string, obrigatório): ID da resposta
+
+**Resposta 200:**
+```json
+{
+  /* Dados da resposta */
+}
+```
+
+---
+
+## Lawsuits Service
+
+### POST /lawsuits
+
+**Descrição:** Consulta datalake hot storage
+
+**Body:** Mesmo schema do POST /requests
+
+**Resposta 200:**
+```json
+{
+  /* Resultado da consulta */
+}
+```
+
+### GET /lawsuits/{cnj_code}/{instance}/attachments/{attachment_id}
+
+**Descrição:** Baixar anexo específico
+
+**Parâmetros Path:**
+- `cnj_code` (string, obrigatório): Código CNJ do processo
+- `instance` (string, obrigatório): Instância do processo  
+- `attachment_id` (string, obrigatório): ID do anexo
+
+**Resposta 200:**
+- **Content-Type:** `application/octet-stream`
+- **Body:** Arquivo binário
+
+---
+
+## Tracking Service
+
+### POST /tracking
+
+**Descrição:** Criar monitoramento
+
+**Body (JSON):**
+```json
+{
+  "recurrence": 1,
+  "search": {
+    "search_type": "cpf|cnpj|oab|lawsuit_cnj|lawsuit_id|custom",
+    "search_key": "string",
+    "response_type": "lawsuit|parties|attachments|step|lawsuits",
+    "cache_ttl_in_days": 7,
+    "search_params": { /* SearchParams Object */ }
+  }
+}
+```
+
+**Resposta 200:**
+```json
+{
+  "tracking_id": "string",
+  "status": "created"
+}
+```
+
+### GET /tracking
+
+**Descrição:** Consultar monitoramentos
+
+**Parâmetros Query:**
+- `page` (integer, opcional): Número da página
+- `status` (string, opcional): Filtro por status
+
+**Resposta 200:**
+```json
+{
+  "page_data": [
+    {
+      "tracking_id": "string",
+      "status": "string",
+      "recurrence": 1,
+      "search": { /* Search Object */ },
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+### GET /tracking/{tracking_id}
+
+**Descrição:** Consultar monitoramento específico
+
+**Parâmetros Path:**
+- `tracking_id` (string, obrigatório): ID do monitoramento
+
+**Resposta 200:**
+```json
+{
+  "tracking_id": "string",
+  "status": "string",
+  "search": { /* Search Object */ },
+  "created_at": "2023-01-01T00:00:00Z"
+}
+```
+
+### DELETE /tracking/{tracking_id}
+
+**Descrição:** Deletar monitoramento
+
+**Parâmetros Path:**
+- `tracking_id` (string, obrigatório): ID do monitoramento
+
+**Resposta 200:**
+```json
+{
+  "tracking_id": "string",
+  "status": "deleted"
+}
+```
+
+### POST /tracking/{tracking_id}/pause
+
+**Descrição:** Pausar monitoramento
+
+**Parâmetros Path:**
+- `tracking_id` (string, obrigatório): ID do monitoramento
+
+**Resposta 200:**
+```json
+{
+  "tracking_id": "string",
+  "status": "paused"
+}
+```
+
+### POST /tracking/{tracking_id}/resume
+
+**Descrição:** Reativar monitoramento
+
+**Parâmetros Path:**
+- `tracking_id` (string, obrigatório): ID do monitoramento
+
+**Resposta 200:**
+```json
+{
+  "tracking_id": "string",
+  "status": "created"
+}
+```
+
+---
+
+## Registration Data Service
+
+### POST /registrationData
+
+**Descrição:** Consultar dados cadastrais
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj",
+    "search_key": "string"
+  },
+  "reveal_partners_documents": true
+}
+```
+
+**Resposta 200:**
+```json
+{
+  "document": "string",
+  "document_type": "cpf|cnpj",
+  "name": "string",
+  "registration_data": { /* Registration Data Object */ },
+  "company_info": { /* Company Info Object */ }
+}
+```
+
+---
+
+## Vault/Credentials Service
+
+### GET /vault
+
+**Descrição:** Consultar status das credenciais
+
+**Resposta 200:**
+```json
+{
+  "systems": [
+    {
+      "name": "string",
+      "credential_status": "active|inactive|expired",
+      "customer_key": "string"
+    }
+  ]
+}
+```
+
+### POST /vault/create
+
+**Descrição:** Cadastrar credenciais
+
+**Body (JSON):**
+```json
+{
+  "customer_key": "string",
+  "credentials": [
+    {
+      "system": "string",
+      "username": "string", 
+      "password": "string"
+    }
+  ]
+}
+```
+
+**Resposta 200:**
+```json
+{
+  /* Confirmação de salvamento */
+}
+```
+
+### GET /credentials
+
+**Descrição:** Listar sistemas e credenciais
+
+**Resposta 200:**
+```json
+{
+  "systems": [
+    {
+      "name": "string",
+      "credential_status": "active|inactive|expired"
+    }
+  ]
+}
+```
+
+---
+
+## Schemas
+
+### Search Object
+```json
+{
+  "search_type": "cpf|cnpj|oab|lawsuit_cnj|lawsuit_id|custom",
+  "search_key": "string",
+  "response_type": "lawsuit|parties|attachments|step|lawsuits",
+  "cache_ttl_in_days": 7,
+  "search_params": {
+    "lawsuit_instance": 1,
+    "masked_response": "string",
+    "filter": {
+      "side": "autor|reu",
+      "distribution_date_gte": "2023-01-01",
+      "amount_gte": 10000,
+      "amount_lte": 100000,
+      "tribunals": {
+        "tjsp": true,
+        "tjrj": true
+      }
+    }
+  }
+}
+```
+
+### Filter Object
+```json
+{
+  "side": "autor|reu",
+  "distribution_date_gte": "2023-01-01",
+  "amount_gte": 10000,
+  "amount_lte": 100000,
+  "tribunals": {
+    "tjsp": true,
+    "tjrj": true,
+    "tjmg": true,
+    "tjrs": true
+  }
+}
+```
+
+---
+
+## Códigos de Status HTTP
+
+| Código | Descrição |
+|--------|-----------|
+| `200` | Sucesso |
+| `400` | Parâmetros inválidos |
+| `401` | API key inválida ou ausente |
+| `403` | Sem permissão |
+| `404` | Recurso não encontrado |
+| `429` | Limite de rate exceeded |
+| `500` | Erro interno do servidor |
+
+---
+
+## Rate Limits
+
+- **Padrão:** 1000 requisições por minuto
+- **Burst:** 100 requisições por segundo
+- **Headers de resposta:**
+  - `X-RateLimit-Limit`: Limite total
+  - `X-RateLimit-Remaining`: Requisições restantes
+  - `X-RateLimit-Reset`: Timestamp do reset
+
+---
+
+## Tipos de Busca (search_type)
+
+| Tipo | Descrição | Formato |
+|------|-----------|---------|
+| `cpf` | CPF de pessoa física | 11 dígitos |
+| `cnpj` | CNPJ de pessoa jurídica | 14 dígitos |
+| `oab` | Número da OAB | Formato: UF123456 |
+| `lawsuit_cnj` | Código CNJ do processo | Formato padrão CNJ |
+| `lawsuit_id` | ID interno do processo | String |
+| `custom` | Busca personalizada | Conforme especificação |
+
+---
+
+## Tipos de Resposta (response_type)
+
+| Tipo | Descrição |
+|------|-----------|
+| `lawsuit` | Dados completos do processo |
+| `parties` | Apenas partes do processo |
+| `attachments` | Apenas anexos |
+| `step` | Movimentações do processo |
+| `lawsuits` | Lista de processos |
