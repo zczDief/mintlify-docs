@@ -1,0 +1,277 @@
+---
+title: "Endpoints – Registration Data"
+description: "Documentação completa dos endpoints de dados cadastrais da Judit API"
+---
+
+# Endpoints – Registration Data
+
+Os endpoints de **registration data** são responsáveis por consultar dados cadastrais de pessoas físicas e jurídicas na Judit API.
+
+## Base URL
+
+```
+https://requests.prod.judit.io
+```
+
+## Visão Geral dos Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `POST` | `/registrationData` | Consultar dados cadastrais |
+
+---
+
+## POST /registrationData
+
+Consulta dados cadastrais de pessoas físicas ou jurídicas.
+
+### Parâmetros
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj",
+    "search_key": "string"
+  },
+  "reveal_partners_documents": true
+}
+```
+
+**Campos:**
+- `search.search_type` (string, obrigatório): Tipo de busca - "cpf" ou "cnpj"
+- `search.search_key` (string, obrigatório): CPF ou CNPJ para consulta
+- `reveal_partners_documents` (boolean, opcional): Se deve revelar documentos dos sócios
+
+### Resposta
+
+**200 OK:**
+```json
+{
+  "document": "12345678901",
+  "document_type": "cpf",
+  "name": "João Silva",
+  "registration_data": {
+    "personal_info": {
+      "full_name": "João Silva Santos",
+      "birth_date": "1990-01-15",
+      "mother_name": "Maria Silva",
+      "cpf": "12345678901",
+      "rg": "123456789"
+    },
+    "addresses": [
+      {
+        "street": "Rua das Flores, 123",
+        "neighborhood": "Centro",
+        "city": "São Paulo",
+        "state": "SP",
+        "zip_code": "01234-567",
+        "type": "residential"
+      }
+    ],
+    "contacts": {
+      "phones": ["11999887766"],
+      "emails": ["joao@email.com"]
+    }
+  },
+  "company_info": {
+    "cnpj": "12345678000195",
+    "company_name": "Empresa Exemplo LTDA",
+    "trade_name": "Exemplo",
+    "legal_nature": "206-2",
+    "registration_status": "ATIVA",
+    "partners": [
+      {
+        "name": "João Silva",
+        "document": "12345678901",
+        "participation": "50%",
+        "role": "Sócio Administrador"
+      }
+    ]
+  }
+}
+```
+
+### Exemplo de Uso
+
+<CodeGroup>
+
+```javascript JavaScript
+const response = await fetch('https://requests.prod.judit.io/registrationData', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-key': 'sua-api-key'
+  },
+  body: JSON.stringify({
+    search: {
+      search_type: "cpf",
+      search_key: "12345678901"
+    },
+    reveal_partners_documents: true
+  })
+});
+
+if (response.ok) {
+    const data = await response.json();
+    console.log('Dados cadastrais:', data);
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+```python Python
+import requests
+
+url = "https://requests.prod.judit.io/registrationData"
+headers = {
+    "Content-Type": "application/json",
+    "api-key": "sua-api-key"
+}
+payload = {
+    "search": {
+        "search_type": "cpf",
+        "search_key": "12345678901"
+    },
+    "reveal_partners_documents": True
+}
+
+response = requests.post(url, json=payload, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print("Dados cadastrais:", data)
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+```curl cURL
+curl -X POST "https://requests.prod.judit.io/registrationData" \
+  -H "Content-Type: application/json" \
+  -H "api-key: sua-api-key" \
+  -d '{
+    "search": {
+      "search_type": "cpf",
+      "search_key": "12345678901"
+    },
+    "reveal_partners_documents": true
+  }'
+```
+
+</CodeGroup>
+
+---
+
+## Exemplo para CNPJ
+
+### Requisição
+
+```json
+{
+  "search": {
+    "search_type": "cnpj",
+    "search_key": "12345678000195"
+  },
+  "reveal_partners_documents": false
+}
+```
+
+### Resposta
+
+```json
+{
+  "document": "12345678000195",
+  "document_type": "cnpj",
+  "company_info": {
+    "cnpj": "12345678000195",
+    "company_name": "Empresa Exemplo LTDA",
+    "trade_name": "Exemplo",
+    "legal_nature": "206-2",
+    "registration_status": "ATIVA",
+    "registration_date": "2020-01-15",
+    "share_capital": "100000.00",
+    "main_activity": {
+      "code": "6201-5/00",
+      "description": "Desenvolvimento de programas de computador sob encomenda"
+    },
+    "secondary_activities": [
+      {
+        "code": "6202-3/00",
+        "description": "Desenvolvimento e licenciamento de programas de computador customizáveis"
+      }
+    ],
+    "address": {
+      "street": "Rua Comercial, 456",
+      "neighborhood": "Centro",
+      "city": "São Paulo",
+      "state": "SP",
+      "zip_code": "01234-567"
+    },
+    "partners": [
+      {
+        "name": "João Silva",
+        "document": "***.***.***-**",
+        "participation": "50%",
+        "role": "Sócio Administrador"
+      },
+      {
+        "name": "Maria Santos",
+        "document": "***.***.***-**",
+        "participation": "50%",
+        "role": "Sócia"
+      }
+    ]
+  }
+}
+```
+
+---
+
+## Tipos de Dados Retornados
+
+### Para CPF (Pessoa Física)
+- **Dados Pessoais:** Nome completo, data de nascimento, nome da mãe
+- **Documentos:** CPF, RG
+- **Endereços:** Residencial, comercial
+- **Contatos:** Telefones, emails
+- **Vínculos Empresariais:** Empresas onde é sócio
+
+### Para CNPJ (Pessoa Jurídica)
+- **Dados da Empresa:** Razão social, nome fantasia, CNPJ
+- **Situação Cadastral:** Status, data de abertura
+- **Capital Social:** Valor do capital
+- **Atividades:** Principal e secundárias (CNAE)
+- **Endereço:** Sede da empresa
+- **Quadro Societário:** Sócios e participações
+
+---
+
+## Parâmetro reveal_partners_documents
+
+Quando `reveal_partners_documents` é definido como `true`:
+- Os documentos dos sócios são exibidos completos
+- Informações adicionais dos sócios podem ser incluídas
+
+Quando `false` ou omitido:
+- Os documentos dos sócios são mascarados (***.***.***-**)
+- Apenas informações básicas são retornadas
+
+---
+
+## Códigos de Erro
+
+| Código | Descrição |
+|--------|-----------|
+| `400` | CPF/CNPJ inválido ou parâmetros malformados |
+| `401` | API key inválida ou ausente |
+| `404` | Dados cadastrais não encontrados |
+| `429` | Limite de rate exceeded |
+| `500` | Erro interno do servidor |
+
+## Considerações Importantes
+
+- Os dados cadastrais são obtidos de fontes oficiais
+- Algumas informações podem não estar disponíveis para todos os documentos
+- O tempo de resposta pode variar dependendo da fonte dos dados
+- Respeite os limites de rate para evitar bloqueios
+- Use este endpoint responsavelmente, respeitando a LGPD

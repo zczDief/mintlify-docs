@@ -1,0 +1,322 @@
+---
+title: "Endpoints – Vault"
+description: "Documentação completa dos endpoints do cofre de credenciais da Judit API"
+---
+
+# Endpoints – Vault
+
+Os endpoints de **vault** são responsáveis pelo gerenciamento seguro de credenciais de tribunais na Judit API.
+
+## Base URL
+
+```
+https://requests.prod.judit.io
+```
+
+## Visão Geral dos Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `GET` | `/vault` | Consultar status das credenciais |
+| `POST` | `/vault/create` | Cadastrar novas credenciais |
+| `GET` | `/credentials` | Listar sistemas e credenciais |
+
+---
+
+## GET /vault
+
+Lista o status das credenciais armazenadas por sistema.
+
+### Parâmetros
+
+Nenhum parâmetro necessário.
+
+### Resposta
+
+**200 OK:**
+```json
+{
+  "systems": [
+    {
+      "name": "tjsp",
+      "credential_status": "active|inactive|expired",
+      "customer_key": "string"
+    },
+    {
+      "name": "tjrj",
+      "credential_status": "active|inactive|expired",
+      "customer_key": "string"
+    }
+  ]
+}
+```
+
+### Exemplo de Uso
+
+<CodeGroup>
+
+```javascript JavaScript
+const response = await fetch('https://requests.prod.judit.io/vault', {
+  method: 'GET',
+  headers: {
+    'api-key': 'sua-api-key'
+  }
+});
+
+if (response.ok) {
+    const data = await response.json();
+    console.log('Status das credenciais:', data.systems);
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+```python Python
+import requests
+
+url = "https://requests.prod.judit.io/vault"
+headers = {
+    "api-key": "sua-api-key"
+}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print("Status das credenciais:", data["systems"])
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+```curl cURL
+curl -X GET "https://requests.prod.judit.io/vault" \
+  -H "api-key: sua-api-key"
+```
+
+</CodeGroup>
+
+---
+
+## POST /vault/create
+
+Cadastra novas credenciais para armazenamento seguro no cofre.
+
+### Parâmetros
+
+**Body (JSON):**
+```json
+{
+  "customer_key": "string",
+  "credentials": [
+    {
+      "system": "tjsp",
+      "username": "seu-usuario",
+      "password": "sua-senha"
+    },
+    {
+      "system": "tjrj",
+      "username": "seu-usuario",
+      "password": "sua-senha"
+    }
+  ]
+}
+```
+
+### Resposta
+
+**200 OK:**
+```json
+{
+  "message": "Credenciais salvas com sucesso",
+  "systems_updated": ["tjsp", "tjrj"]
+}
+```
+
+### Exemplo de Uso
+
+<CodeGroup>
+
+```javascript JavaScript
+const response = await fetch('https://requests.prod.judit.io/vault/create', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-key': 'sua-api-key'
+  },
+  body: JSON.stringify({
+    customer_key: "minha-chave-cliente",
+    credentials: [
+      {
+        system: "tjsp",
+        username: "meu-usuario",
+        password: "minha-senha"
+      }
+    ]
+  })
+});
+
+if (response.ok) {
+    const data = await response.json();
+    console.log('Credenciais salvas:', data);
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+```python Python
+import requests
+
+url = "https://requests.prod.judit.io/vault/create"
+headers = {
+    "Content-Type": "application/json",
+    "api-key": "sua-api-key"
+}
+payload = {
+    "customer_key": "minha-chave-cliente",
+    "credentials": [
+        {
+            "system": "tjsp",
+            "username": "meu-usuario",
+            "password": "minha-senha"
+        }
+    ]
+}
+
+response = requests.post(url, json=payload, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print("Credenciais salvas:", data)
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+```curl cURL
+curl -X POST "https://requests.prod.judit.io/vault/create" \
+  -H "Content-Type: application/json" \
+  -H "api-key: sua-api-key" \
+  -d '{
+    "customer_key": "minha-chave-cliente",
+    "credentials": [
+      {
+        "system": "tjsp",
+        "username": "meu-usuario",
+        "password": "minha-senha"
+      }
+    ]
+  }'
+```
+
+</CodeGroup>
+
+---
+
+## GET /credentials
+
+Lista todos os sistemas disponíveis e o status das credenciais.
+
+### Parâmetros
+
+Nenhum parâmetro necessário.
+
+### Resposta
+
+**200 OK:**
+```json
+{
+  "systems": [
+    {
+      "name": "tjsp",
+      "credential_status": "active|inactive|expired"
+    },
+    {
+      "name": "tjrj", 
+      "credential_status": "active|inactive|expired"
+    }
+  ]
+}
+```
+
+### Exemplo de Uso
+
+<CodeGroup>
+
+```javascript JavaScript
+const response = await fetch('https://requests.prod.judit.io/credentials', {
+  method: 'GET',
+  headers: {
+    'api-key': 'sua-api-key'
+  }
+});
+
+if (response.ok) {
+    const data = await response.json();
+    console.log('Sistemas disponíveis:', data.systems);
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+```python Python
+import requests
+
+url = "https://requests.prod.judit.io/credentials"
+headers = {
+    "api-key": "sua-api-key"
+}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print("Sistemas disponíveis:", data["systems"])
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+```curl cURL
+curl -X GET "https://requests.prod.judit.io/credentials" \
+  -H "api-key: sua-api-key"
+```
+
+</CodeGroup>
+
+---
+
+## Status das Credenciais
+
+| Status | Descrição |
+|--------|-----------|
+| `active` | Credenciais válidas e funcionais |
+| `inactive` | Credenciais desativadas |
+| `expired` | Credenciais expiradas, necessário renovar |
+
+## Sistemas Suportados
+
+Os principais sistemas de tribunais suportados incluem:
+
+- **TJSP** - Tribunal de Justiça de São Paulo
+- **TJRJ** - Tribunal de Justiça do Rio de Janeiro
+- **TJMG** - Tribunal de Justiça de Minas Gerais
+- **TJRS** - Tribunal de Justiça do Rio Grande do Sul
+- **TST** - Tribunal Superior do Trabalho
+- **STJ** - Superior Tribunal de Justiça
+- **STF** - Supremo Tribunal Federal
+
+## Códigos de Erro
+
+| Código | Descrição |
+|--------|-----------|
+| `400` | Parâmetros inválidos ou credenciais malformadas |
+| `401` | API key inválida ou ausente |
+| `403` | Sem permissão para acessar o cofre |
+| `429` | Limite de rate exceeded |
+| `500` | Erro interno do servidor |
+
+## Considerações de Segurança
+
+- Todas as credenciais são criptografadas antes do armazenamento
+- Use HTTPS para todas as comunicações
+- Mantenha sua API key segura
+- Monitore regularmente o status das credenciais
+- Renove credenciais expiradas imediatamente

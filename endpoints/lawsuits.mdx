@@ -1,0 +1,239 @@
+---
+title: "Endpoints – Lawsuits"
+description: "Documentação completa dos endpoints de consulta ao datalake de processos da Judit API"
+---
+
+# Endpoints – Lawsuits
+
+Os endpoints de **lawsuits** são responsáveis por consultar o datalake de processos judiciais e baixar anexos na Judit API.
+
+## Base URL
+
+```
+https://lawsuits.production.judit.io
+```
+
+## Visão Geral dos Endpoints
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| `POST` | `/lawsuits` | Consulta datalake hot storage |
+| `GET` | `/lawsuits/{cnj_code}/{instance}/attachments/{attachment_id}` | Baixar anexo específico |
+
+---
+
+## POST /lawsuits
+
+Realiza consulta direta ao datalake de processos judiciais (hot storage).
+
+### Parâmetros
+
+**Body (JSON):**
+```json
+{
+  "search": {
+    "search_type": "cpf|cnpj|oab|lawsuit_cnj|lawsuit_id|custom",
+    "search_key": "string",
+    "response_type": "lawsuit|parties|attachments|step|lawsuits",
+    "cache_ttl_in_days": 7,
+    "search_params": {
+      "lawsuit_instance": 1,
+      "masked_response": "string",
+      "filter": {
+        "side": "autor|reu",
+        "distribution_date_gte": "2023-01-01",
+        "amount_gte": 10000,
+        "amount_lte": 100000,
+        "tribunals": {
+          "tjsp": true,
+          "tjrj": true
+        }
+      }
+    }
+  }
+}
+```
+
+### Resposta
+
+**200 OK:**
+```json
+{
+  "data": [
+    {
+      "lawsuit_id": "string",
+      "cnj_code": "string",
+      "tribunal": "string",
+      "parties": [...],
+      "movements": [...],
+      "attachments": [...]
+    }
+  ],
+  "total": 0,
+  "page": 1,
+  "page_size": 50
+}
+```
+
+### Exemplo de Uso
+
+<CodeGroup>
+
+```javascript JavaScript
+const response = await fetch('https://lawsuits.production.judit.io/lawsuits', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'api-key': 'sua-api-key'
+  },
+  body: JSON.stringify({
+    search: {
+      search_type: "cpf",
+      search_key: "12345678901",
+      response_type: "lawsuit",
+      cache_ttl_in_days: 7
+    }
+  })
+});
+
+if (response.ok) {
+    const data = await response.json();
+    console.log('Processos encontrados:', data);
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+```python Python
+import requests
+
+url = "https://lawsuits.production.judit.io/lawsuits"
+headers = {
+    "Content-Type": "application/json",
+    "api-key": "sua-api-key"
+}
+payload = {
+    "search": {
+        "search_type": "cpf",
+        "search_key": "12345678901",
+        "response_type": "lawsuit",
+        "cache_ttl_in_days": 7
+    }
+}
+
+response = requests.post(url, json=payload, headers=headers)
+
+if response.status_code == 200:
+    data = response.json()
+    print("Processos encontrados:", data)
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+```curl cURL
+curl -X POST "https://lawsuits.production.judit.io/lawsuits" \
+  -H "Content-Type: application/json" \
+  -H "api-key: sua-api-key" \
+  -d '{
+    "search": {
+      "search_type": "cpf",
+      "search_key": "12345678901",
+      "response_type": "lawsuit",
+      "cache_ttl_in_days": 7
+    }
+  }'
+```
+
+</CodeGroup>
+
+---
+
+## GET /lawsuits/{cnj_code}/{instance}/attachments/{attachment_id}
+
+Baixa um anexo específico de um processo judicial.
+
+### Parâmetros
+
+**Path Parameters:**
+- `cnj_code` (string, obrigatório): Código CNJ do processo
+- `instance` (string, obrigatório): Instância do processo
+- `attachment_id` (string, obrigatório): ID do anexo
+
+### Resposta
+
+**200 OK:**
+- **Content-Type:** `application/octet-stream`
+- **Body:** Arquivo binário do anexo
+
+### Exemplo de Uso
+
+<CodeGroup>
+
+```javascript JavaScript
+const response = await fetch(
+  'https://lawsuits.production.judit.io/lawsuits/1234567-89.2023.8.26.0001/1/attachments/att123',
+  {
+    method: 'GET',
+    headers: {
+      'api-key': 'sua-api-key'
+    }
+  }
+);
+
+if (response.ok) {
+    const blob = await response.blob();
+    // Criar URL para download
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'anexo.pdf';
+    a.click();
+} else {
+    console.error(`Erro: ${response.status}`);
+}
+```
+
+```python Python
+import requests
+
+url = "https://lawsuits.production.judit.io/lawsuits/1234567-89.2023.8.26.0001/1/attachments/att123"
+headers = {
+    "api-key": "sua-api-key"
+}
+
+response = requests.get(url, headers=headers)
+
+if response.status_code == 200:
+    with open("anexo.pdf", "wb") as f:
+        f.write(response.content)
+    print("Anexo baixado com sucesso")
+else:
+    print(f"Erro: {response.status_code}")
+```
+
+```curl cURL
+curl -X GET "https://lawsuits.production.judit.io/lawsuits/1234567-89.2023.8.26.0001/1/attachments/att123" \
+  -H "api-key: sua-api-key" \
+  -o anexo.pdf
+```
+
+</CodeGroup>
+
+---
+
+## Códigos de Erro
+
+| Código | Descrição |
+|--------|-----------|
+| `400` | Parâmetros inválidos |
+| `401` | API key inválida ou ausente |
+| `404` | Processo ou anexo não encontrado |
+| `429` | Limite de rate exceeded |
+| `500` | Erro interno do servidor |
+
+## Considerações Importantes
+
+- O endpoint `/lawsuits` consulta diretamente o hot storage, oferecendo acesso mais rápido aos dados
+- Para download de anexos, certifique-se de ter as permissões adequadas
+- Os anexos são retornados como streams binários
+- Recomenda-se implementar tratamento adequado para arquivos grandes
